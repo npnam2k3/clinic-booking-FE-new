@@ -1,0 +1,397 @@
+// Mock Data cho Admin Pages
+
+export const mockDoctors = [
+  {
+    id: "DOC001",
+    name: "BS. Trần Thị Bích",
+    degree: "Thạc sĩ, Tiến sĩ",
+    title: "Bác sĩ, Phó giáo sư",
+    specialty: "Tim mạch",
+    specialtyId: "SPEC001",
+    experience: 15,
+    status: "active",
+    phone: "0901234567",
+    email: "bich.tran@hospital.vn",
+    avatar: "https://i.pravatar.cc/150?img=1",
+    description: "Chuyên gia hàng đầu về tim mạch với hơn 15 năm kinh nghiệm",
+  },
+  {
+    id: "DOC002",
+    name: "BS. Phạm Văn Dũng",
+    degree: "Thạc sĩ",
+    title: "Bác sĩ",
+    specialty: "Nội khoa",
+    specialtyId: "SPEC002",
+    experience: 10,
+    status: "active",
+    phone: "0901234568",
+    email: "dung.pham@hospital.vn",
+    avatar: "https://i.pravatar.cc/150?img=12",
+    description: "Bác sĩ giàu kinh nghiệm trong điều trị các bệnh nội khoa",
+  },
+  {
+    id: "DOC003",
+    name: "BS. Nguyễn Văn Giang",
+    degree: "Thạc sĩ",
+    title: "Bác sĩ",
+    specialty: "Ngoại khoa",
+    specialtyId: "SPEC003",
+    experience: 8,
+    status: "active",
+    phone: "0901234569",
+    email: "giang.nguyen@hospital.vn",
+    avatar: "https://i.pravatar.cc/150?img=13",
+    description: "Chuyên về phẫu thuật và điều trị ngoại khoa",
+  },
+];
+
+export const mockSpecialties = [
+  {
+    id: "SPEC001",
+    name: "Tim mạch",
+    code: "SPEC001",
+    description: "Chuyên khoa điều trị các bệnh về tim mạch",
+    createdAt: "2024-01-15",
+  },
+  {
+    id: "SPEC002",
+    name: "Nội khoa",
+    code: "SPEC002",
+    description: "Chuyên khoa điều trị các bệnh nội khoa tổng quát",
+    createdAt: "2024-01-15",
+  },
+  {
+    id: "SPEC003",
+    name: "Ngoại khoa",
+    code: "SPEC003",
+    description: "Chuyên khoa phẫu thuật và điều trị ngoại khoa",
+    createdAt: "2024-01-15",
+  },
+  {
+    id: "SPEC004",
+    name: "Nhi khoa",
+    code: "SPEC004",
+    description: "Chuyên khoa điều trị bệnh cho trẻ em",
+    createdAt: "2024-01-16",
+  },
+];
+
+export const mockPatients = [
+  {
+    id: "BN001",
+    name: "Nguyễn Văn An",
+    gender: "Nam",
+    dob: "1985-05-15",
+    phone: "0901234567",
+    address: "123 Đường ABC, Quận 1, TP.HCM",
+    createdAt: "2024-01-10",
+  },
+  {
+    id: "BN002",
+    name: "Lê Thị Cúc",
+    gender: "Nữ",
+    dob: "1990-08-20",
+    phone: "0912345678",
+    address: "456 Đường XYZ, Quận 3, TP.HCM",
+    createdAt: "2024-01-12",
+  },
+  {
+    id: "BN003",
+    name: "Hoàng Văn Em",
+    gender: "Nam",
+    dob: "1978-03-10",
+    phone: "0923456789",
+    address: "789 Đường DEF, Quận 5, TP.HCM",
+    createdAt: "2024-01-15",
+  },
+];
+
+export const mockAppointments = [
+  {
+    id: "APT001",
+    patientId: "BN001",
+    patientName: "Nguyễn Văn An",
+    doctorId: "DOC001",
+    doctorName: "BS. Trần Thị Bích",
+    date: "2025-01-10",
+    time: "09:00 - 09:30",
+    status: "pending",
+    note: "Khám định kỳ",
+  },
+  {
+    id: "APT002",
+    patientId: "BN002",
+    patientName: "Lê Thị Cúc",
+    doctorId: "DOC002",
+    doctorName: "BS. Phạm Văn Dũng",
+    date: "2025-01-10",
+    time: "10:30 - 11:00",
+    status: "confirmed",
+    note: "Tái khám",
+  },
+  {
+    id: "APT003",
+    patientId: "BN003",
+    patientName: "Hoàng Văn Em",
+    doctorId: "DOC003",
+    doctorName: "BS. Nguyễn Văn Giang",
+    date: "2025-01-09",
+    time: "14:00 - 14:30",
+    status: "completed",
+    note: "",
+  },
+  {
+    id: "APT004",
+    patientId: "BN001",
+    patientName: "Đỗ Thị Phượng",
+    doctorId: "DOC001",
+    doctorName: "BS. Trần Thị Bích",
+    date: "2025-01-08",
+    time: "15:30 - 16:00",
+    status: "cancelled",
+    note: "Bệnh nhân hủy",
+    cancellationReason: "Bận việc đột xuất",
+    cancelledAt: "2025-01-08 10:30",
+  },
+];
+
+export const mockWorkSchedules = [
+  // Lịch mới (2025)
+  {
+    id: "SCH003",
+    doctorId: "DOC001",
+    doctorName: "BS. Trần Thị Bích",
+    dayOfWeek: "Thứ 2",
+    startTime: "08:00",
+    endTime: "16:00",
+    slotDuration: 30,
+    effectiveFrom: "2025-01-01",
+    effectiveTo: "2025-12-31",
+    status: "active",
+    type: "new"
+  },
+  {
+    id: "SCH004",
+    doctorId: "DOC002",
+    doctorName: "BS. Nguyễn Văn Giang",
+    dayOfWeek: "Thứ 4",
+    startTime: "09:00",
+    endTime: "17:00",
+    slotDuration: 30,
+    effectiveFrom: "2025-01-01",
+    effectiveTo: "2025-12-31",
+    status: "active",
+    type: "new"
+  },
+  {
+    id: "SCH005",
+    doctorId: "DOC003",
+    doctorName: "BS. Phạm Văn Dũng",
+    dayOfWeek: "Thứ 6",
+    startTime: "08:30",
+    endTime: "15:30",
+    slotDuration: 45,
+    effectiveFrom: "2025-01-01",
+    effectiveTo: "2025-12-31",
+    status: "active",
+    type: "new"
+  },
+  // Lịch cũ (2024)
+  {
+    id: "SCH001",
+    doctorId: "DOC001",
+    doctorName: "BS. Trần Thị Bích",
+    dayOfWeek: "Thứ 2",
+    startTime: "07:30",
+    endTime: "15:30",
+    slotDuration: 30,
+    effectiveFrom: "2024-01-01",
+    effectiveTo: "2024-12-31",
+    status: "expired",
+    type: "old"
+  },
+  {
+    id: "SCH002",
+    doctorId: "DOC002",
+    doctorName: "BS. Nguyễn Văn Giang",
+    dayOfWeek: "Thứ 4",
+    startTime: "08:30",
+    endTime: "16:30",
+    slotDuration: 30,
+    effectiveFrom: "2024-01-01",
+    effectiveTo: "2024-12-31",
+    status: "expired",
+    type: "old"
+  },
+  {
+    id: "SCH006",
+    doctorId: "DOC003",
+    doctorName: "BS. Phạm Văn Dũng",
+    dayOfWeek: "Thứ 6",
+    startTime: "09:00",
+    endTime: "16:00",
+    slotDuration: 30,
+    effectiveFrom: "2024-01-01",
+    effectiveTo: "2024-12-31",
+    status: "expired",
+    type: "old"
+  },
+];
+
+export const mockSpecialSchedules = [
+  {
+    id: "SPEC001",
+    doctorId: "DOC001",
+    doctorName: "BS. Trần Thị Bích",
+    date: "2025-01-15",
+    startTime: "08:00",
+    endTime: "12:00",
+    slotDuration: 30,
+    status: "active",
+    type: "work",
+  },
+  {
+    id: "SPEC002",
+    doctorId: "DOC002",
+    doctorName: "BS. Phạm Văn Dũng",
+    date: "2025-01-20",
+    type: "off",
+    status: "cancelled",
+  },
+  {
+    id: "SPEC003",
+    doctorId: "DOC003",
+    doctorName: "BS. Nguyễn Văn Giang",
+    date: "2025-01-18",
+    startTime: "14:00",
+    endTime: "18:00",
+    slotDuration: 30,
+    status: "active",
+    type: "work",
+  },
+];
+
+export const mockUsers = [
+  {
+    id: "USER001",
+    email: "admin@hospital.vn",
+    role: "admin",
+    status: "active",
+    createdAt: "2024-01-01",
+  },
+  {
+    id: "USER002",
+    email: "staff@hospital.vn",
+    role: "staff",
+    status: "active",
+    createdAt: "2024-01-15",
+  },
+  {
+    id: "USER003",
+    email: "staff2@hospital.vn",
+    role: "staff",
+    status: "inactive",
+    createdAt: "2024-02-01",
+  },
+  {
+    id: "USER004",
+    email: "user@hospital.vn",
+    role: "user",
+    status: "active",
+    createdAt: "2024-03-10",
+  },
+];
+
+// Dashboard Statistics
+export const mockDashboardStats = {
+  todayAppointments: 24,
+  todayAppointmentsPendingConfirmed: 24,
+  cancelledToday: 8,
+  activeDoctors: 15,
+  activeDoctorsWorkingToday: 15,
+  totalPatients: 342,
+  weeklyAppointments: [
+    { day: "T2", count: 12 },
+    { day: "T3", count: 18 },
+    { day: "T4", count: 15 },
+    { day: "T5", count: 22 },
+    { day: "T6", count: 19 },
+    { day: "T7", count: 14 },
+    { day: "CN", count: 8 },
+  ],
+  appointmentsByStatus: {
+    cancelled: 45,
+    completed: 35,
+    confirmed: 15,
+    pending: 80,
+  },
+  recentAppointments: [
+    {
+      id: "APT001",
+      patientName: "Nguyễn Văn A",
+      doctorName: "BS. Trần Thị B",
+      date: "2025-01-10",
+      time: "09:00",
+      status: "confirmed",
+    },
+    {
+      id: "APT002",
+      patientName: "Lê Thị C",
+      doctorName: "BS. Phạm Văn D",
+      date: "2025-01-10",
+      time: "10:30",
+      status: "pending",
+    },
+    {
+      id: "APT003",
+      patientName: "Hoàng Văn E",
+      doctorName: "BS. Trần Thị B",
+      date: "2025-01-10",
+      time: "14:00",
+      status: "confirmed",
+    },
+    {
+      id: "APT004",
+      patientName: "Đỗ Thị F",
+      doctorName: "BS. Nguyễn Văn G",
+      date: "2025-01-10",
+      time: "15:30",
+      status: "pending",
+    },
+  ],
+};
+
+// Doctor Slots Mock Data
+export const mockDoctorSlots = {
+  DOC001: [
+    {
+      id: "SLOT001",
+      date: "2025-01-10",
+      time: "09:00 - 09:30",
+      status: "available",
+      bookingStatus: "available",
+    },
+    {
+      id: "SLOT002",
+      date: "2025-01-10",
+      time: "09:30 - 10:00",
+      status: "booked",
+      bookingStatus: "booked",
+    },
+    {
+      id: "SLOT003",
+      date: "2025-01-10",
+      time: "13:00 - 13:30",
+      status: "available",
+      bookingStatus: "available",
+    },
+    {
+      id: "SLOT004",
+      date: "2025-01-11",
+      time: "10:00 - 10:30",
+      status: "cancelled",
+      bookingStatus: "cancelled",
+    },
+  ],
+};
+
