@@ -65,17 +65,13 @@ const DashboardPage = () => {
             <div className="text-3xl font-bold text-gray-900">
               {stats.todayAppointments}
             </div>
-            <p className="mt-1 text-xs text-gray-500">
-              Pending & Confirmed
-            </p>
+            <p className="mt-1 text-xs text-gray-500">Pending & Confirmed</p>
           </div>
 
           {/* Cancelled Today */}
           <div className="rounded-lg bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-600">
-                Lịch bị hủy
-              </h3>
+              <h3 className="text-sm font-medium text-gray-600">Lịch bị hủy</h3>
               <XCircle className="h-5 w-5 text-gray-400" />
             </div>
             <div className="text-3xl font-bold text-gray-900">
@@ -101,9 +97,7 @@ const DashboardPage = () => {
           {/* Total Patients */}
           <div className="rounded-lg bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-600">
-                Bệnh nhân
-              </h3>
+              <h3 className="text-sm font-medium text-gray-600">Bệnh nhân</h3>
               <UserRound className="h-5 w-5 text-gray-400" />
             </div>
             <div className="text-3xl font-bold text-gray-900">
@@ -122,8 +116,12 @@ const DashboardPage = () => {
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={stats.weeklyAppointments}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="day" stroke="#666" style={{ fontSize: '12px' }} />
-                <YAxis stroke="#666" style={{ fontSize: '12px' }} />
+                <XAxis
+                  dataKey="day"
+                  stroke="#666"
+                  style={{ fontSize: "12px" }}
+                />
+                <YAxis stroke="#666" style={{ fontSize: "12px" }} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#fff",
@@ -137,7 +135,7 @@ const DashboardPage = () => {
                 />
                 <Bar
                   dataKey="count"
-                  fill="#000"
+                  fill="#73C8D2"
                   radius={[4, 4, 0, 0]}
                   animationDuration={1000}
                   animationBegin={0}
@@ -147,18 +145,32 @@ const DashboardPage = () => {
           </div>
 
           {/* Appointments by Status */}
-          <div className="rounded-lg bg-white p-6 shadow-sm">
-            <h3 className="mb-6 text-lg font-semibold">
-              Trạng thái lịch khám
-            </h3>
+          {/* <div className="rounded-lg bg-white p-6 shadow-sm">
+            <h3 className="mb-6 text-lg font-semibold">Trạng thái lịch khám</h3>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
                   data={[
-                    { name: "Cancelled", value: stats.appointmentsByStatus.cancelled, color: "#374151" },
-                    { name: "Completed", value: stats.appointmentsByStatus.completed, color: "#3b82f6" },
-                    { name: "Confirmed", value: stats.appointmentsByStatus.confirmed, color: "#111827" },
-                    { name: "Pending", value: stats.appointmentsByStatus.pending, color: "#f97316" },
+                    {
+                      name: "Cancelled",
+                      value: stats.appointmentsByStatus.cancelled,
+                      color: "#374151",
+                    },
+                    {
+                      name: "Completed",
+                      value: stats.appointmentsByStatus.completed,
+                      color: "#3b82f6",
+                    },
+                    {
+                      name: "Confirmed",
+                      value: stats.appointmentsByStatus.confirmed,
+                      color: "#111827",
+                    },
+                    {
+                      name: "Pending",
+                      value: stats.appointmentsByStatus.pending,
+                      color: "#f97316",
+                    },
                   ]}
                   cx="50%"
                   cy="50%"
@@ -170,10 +182,26 @@ const DashboardPage = () => {
                   animationBegin={0}
                 >
                   {[
-                    { name: "Cancelled", value: stats.appointmentsByStatus.cancelled, color: "#374151" },
-                    { name: "Completed", value: stats.appointmentsByStatus.completed, color: "#3b82f6" },
-                    { name: "Confirmed", value: stats.appointmentsByStatus.confirmed, color: "#111827" },
-                    { name: "Pending", value: stats.appointmentsByStatus.pending, color: "#f97316" },
+                    {
+                      name: "Cancelled",
+                      value: stats.appointmentsByStatus.cancelled,
+                      color: "#374151",
+                    },
+                    {
+                      name: "Completed",
+                      value: stats.appointmentsByStatus.completed,
+                      color: "#3b82f6",
+                    },
+                    {
+                      name: "Confirmed",
+                      value: stats.appointmentsByStatus.confirmed,
+                      color: "#111827",
+                    },
+                    {
+                      name: "Pending",
+                      value: stats.appointmentsByStatus.pending,
+                      color: "#f97316",
+                    },
                   ].map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -191,12 +219,14 @@ const DashboardPage = () => {
                   height={36}
                   iconType="circle"
                   formatter={(value, entry) => (
-                    <span style={{ color: "#374151", fontSize: "14px" }}>{value}</span>
+                    <span style={{ color: "#374151", fontSize: "14px" }}>
+                      {value}
+                    </span>
                   )}
                 />
               </PieChart>
             </ResponsiveContainer>
-          </div>
+          </div> */}
         </div>
 
         {/* Recent Appointments Table */}
@@ -243,4 +273,3 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
-

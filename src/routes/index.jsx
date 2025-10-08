@@ -73,7 +73,7 @@ export const router = createBrowserRouter([
       { path: "patients", element: <PatientsPage /> },
       { path: "appointments", element: <AppointmentsPage /> },
       { path: "work-schedules", element: <WorkSchedulesPage /> },
-      { path: "special-schedules", element: <SpecialSchedulesPage /> },
+      // { path: "special-schedules", element: <SpecialSchedulesPage /> },
       { path: "users", element: <UsersPage /> },
     ],
   },

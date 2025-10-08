@@ -45,11 +45,11 @@ const AdminLayout = () => {
       href: ROUTE.ADMIN_WORK_SCHEDULES,
       icon: CalendarDays,
     },
-    {
-      label: "Lịch đặc biệt",
-      href: ROUTE.ADMIN_SPECIAL_SCHEDULES,
-      icon: CalendarClock,
-    },
+    // {
+    //   label: "Lịch đặc biệt",
+    //   href: ROUTE.ADMIN_SPECIAL_SCHEDULES,
+    //   icon: CalendarClock,
+    // },
     {
       label: "Người dùng",
       href: ROUTE.ADMIN_USERS,
@@ -117,4 +117,3 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
-
