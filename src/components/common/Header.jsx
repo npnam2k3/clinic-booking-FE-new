@@ -1,9 +1,16 @@
 import { UserAvatarMenu } from "@/components/custom/UserAvatarMenu";
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { userAuthService } from "@/service/auth/userAuth.service";
 
 const Header = () => {
   const [isLogin, setIsLogin] = useState(true);
+  
+  useEffect(() => {
+    const token = userAuthService.getAccessToken();
+    setIsLogin(!!token);
+  }, []);
+
   return (
     <div
       className="sticky top-0 z-50 flex justify-between items-center px-[40px] py-[20px]

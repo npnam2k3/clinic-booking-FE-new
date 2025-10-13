@@ -3,15 +3,51 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Asterisk, Eye, EyeOff } from "lucide-react";
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { userAuthService } from "@/service/auth/userAuth.service";
+import { registerValidate } from "@/untils/vaildate/register.validate";
+
 
 const RegisterPage = () => {
-  const [isNull, setIsNull] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const handleSubmit = (e) => {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    fullname: "",
+    phone_number: "",
+    address: "",
+  });
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+      const { id, value } = e.target;
+      setFormData({ ...formData, [id]: value });
+    };
+
+    const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsNull(true);
+
+    // Validate đầu vào
+    const errorMsg = registerValidate(formData);
+    if (errorMsg) {
+      setError(errorMsg);
+      return;
+    }
+
+    try {
+      setError("");
+      const response = await userAuthService.register(formData);
+      console.log("Đăng ký thành công:", response);
+      alert("Đăng ký thành công! Hãy đăng nhập.");
+      navigate("/login");
+    } catch (err) {
+      console.error("Đăng ký thất bại:", err);
+      setError(err?.message || "Đăng ký thất bại, vui lòng thử lại.");
+    }
   };
+
+
   return (
     <div className="flex justify-center items-center min-h-screen gap-x-[20px]">
       <div className="w-[600px]">
@@ -21,39 +57,44 @@ const RegisterPage = () => {
           className="max-w-full h-auto block rounded-[8px]"
         />
       </div>
+
       <form
+        onSubmit={handleSubmit}
         className="flex flex-col gap-4 px-[40px] py-[20px] bg-white rounded-lg 
-        border-t border-t-gray-200
-        shadow-xl w-full max-w-[450px]"
-        onSubmit={(e) => handleSubmit(e)}
+        border-t border-t-gray-200 shadow-xl w-full max-w-[450px]"
       >
         <h2 className="text-2xl font-semibold mt-[8px]">Đăng ký tài khoản</h2>
 
-        {/* email */}
-        <div className="mt-[2px]">
-          <div className="mb-[12px] flex items-center gap-x-[2px]">
+        {/* Email */}
+        <div>
+          <div className="mb-[8px] flex items-center gap-x-[4px]">
             <Label htmlFor="email">Email</Label>
             <Asterisk size={12} className="text-red-600" />
           </div>
-          <Input type="email" id="email" className="mb-[4px]" />
-          {isNull && <p>Email trống</p>}
+          <Input
+            type="email"
+            id="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Nhập email"
+          />
         </div>
 
-        {/* password */}
-        <div className="mt-[2px]">
-          <div className="mb-[12px] flex items-center gap-x-[2px]">
+        {/* Mật khẩu */}
+        <div>
+          <div className="mb-[8px] flex items-center gap-x-[4px]">
             <Label htmlFor="password">Mật khẩu</Label>
             <Asterisk size={12} className="text-red-600" />
           </div>
-
           <div className="relative">
             <Input
               type={showPassword ? "text" : "password"}
               id="password"
-              className="mb-[4px] pr-10"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Nhập mật khẩu"
+              className="pr-10"
             />
-
-            {/* Nút icon ẩn/hiện */}
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
@@ -62,39 +103,55 @@ const RegisterPage = () => {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {isNull && <p>Email trống</p>}
         </div>
 
-        {/* fullname */}
-        <div className="mt-[2px]">
-          <div className="mb-[12px] flex items-center gap-x-[2px]">
+        {/* Họ tên */}
+        <div>
+          <div className="mb-[8px] flex items-center gap-x-[4px]">
             <Label htmlFor="fullname">Họ tên</Label>
             <Asterisk size={12} className="text-red-600" />
           </div>
-          <Input type="fullname" id="fullname" className="mb-[4px]" />
-          {isNull && <p>Email trống</p>}
+          <Input
+            id="fullname"
+            value={formData.fullname}
+            onChange={handleChange}
+            placeholder="Nhập họ tên"
+          />
         </div>
 
-        {/* phone number */}
-        <div className="mt-[2px]">
-          <div className="mb-[12px] flex items-center gap-x-[2px]">
+        {/* Số điện thoại */}
+        <div>
+          <div className="mb-[8px] flex items-center gap-x-[4px]">
             <Label htmlFor="phone_number">Số điện thoại</Label>
             <Asterisk size={12} className="text-red-600" />
           </div>
-          <Input type="phone_number" id="phone_number" className="mb-[4px]" />
-          {isNull && <p>Email trống</p>}
+          <Input
+            id="phone_number"
+            value={formData.phone_number}
+            onChange={handleChange}
+            placeholder="Nhập số điện thoại"
+          />
         </div>
 
-        {/* address */}
-        <div className="mt-[2px]">
-          <Label htmlFor="address" className="mb-[12px]">
-            Địa chỉ
-          </Label>
-          <Input type="address" id="address" className="mb-[4px]" />
+        {/* Địa chỉ */}
+        <div>
+          <Label htmlFor="address">Địa chỉ</Label>
+          <Input
+            id="address"
+            value={formData.address}
+            onChange={handleChange}
+            placeholder="Nhập địa chỉ (tuỳ chọn)"
+          />
         </div>
 
-        <Button className="cursor-pointer">Đăng ký</Button>
-        <div className="flex gap-x-[4px] items-center justify-center">
+        {/* Hiển thị lỗi */}
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+
+        <Button type="submit" className="cursor-pointer mt-2">
+          Đăng ký
+        </Button>
+
+        <div className="flex gap-x-[4px] items-center justify-center mt-2">
           <p>Đã có tài khoản?</p>
           <Link to="/login" className="text-sky-600">
             Đăng nhập
