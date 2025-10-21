@@ -10,9 +10,26 @@ import {
   CalendarClock,
   Shield,
 } from "lucide-react";
+import Header from "@/components/common/Header";
+import storage from "@/untils/storage";
 
 const AdminLayout = () => {
   const location = useLocation();
+  const tokenInfo = storage.getTokenInfo();
+  let role = null;
+
+  try {
+    // Nếu tokenInfo là string thì parse, nếu là object thì dùng trực tiếp
+    const userInfo =
+      typeof tokenInfo === "string" ? JSON.parse(tokenInfo) : tokenInfo;
+    // Truy cập đúng đường dẫn đến role_name (tuỳ theo API trả về)
+    role =
+      userInfo?.role?.role_name ||
+      null;
+  } catch (e) {
+    console.error("Không thể đọc role từ token info:", e);
+  }
+
 
   const menuItems = [
     {
@@ -56,7 +73,10 @@ const AdminLayout = () => {
       icon: Shield,
     },
   ];
-
+  const filteredMenuItems =
+    role === "STAFF"
+      ? menuItems.filter((item) => item.label !== "Người dùng")
+      : menuItems;
   const isActive = (href) => location.pathname === href;
 
   return (
@@ -83,7 +103,7 @@ const AdminLayout = () => {
               Quản lý
             </div>
             <nav className="flex w-full flex-col gap-1">
-              {menuItems.map((item) => {
+              {filteredMenuItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
                 return (
@@ -105,10 +125,10 @@ const AdminLayout = () => {
           </div>
         </div>
       </aside>
-
       {/* Main Content */}
       <div className="flex flex-1 flex-col md:pl-64">
         <main className="flex-1 overflow-auto">
+          <Header />
           <Outlet />
         </main>
       </div>

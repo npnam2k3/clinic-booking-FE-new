@@ -6,7 +6,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { userAuthService } from "@/service/auth/userAuth.service";
 import { registerValidate } from "@/untils/vaildate/register.validate";
-
+import { message } from "antd";
 
 const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,7 +19,7 @@ const RegisterPage = () => {
   });
   const [error, setError] = useState("");
   const navigate = useNavigate();
-
+  const [messageApi, contextHolder] = message.useMessage();
   const handleChange = (e) => {
       const { id, value } = e.target;
       setFormData({ ...formData, [id]: value });
@@ -38,18 +38,17 @@ const RegisterPage = () => {
     try {
       setError("");
       const response = await userAuthService.register(formData);
-      console.log("Đăng ký thành công:", response);
-      alert("Đăng ký thành công! Hãy đăng nhập.");
+      messageApi.success("Đăng ký thành công! Hãy đăng nhập.");
       navigate("/login");
     } catch (err) {
-      console.error("Đăng ký thất bại:", err);
-      setError(err?.message || "Đăng ký thất bại, vui lòng thử lại.");
+      messageApi.error(err?.message || "Đăng ký thất bại, vui lòng thử lại.");
     }
   };
 
 
   return (
     <div className="flex justify-center items-center min-h-screen gap-x-[20px]">
+      {contextHolder}
       <div className="w-[600px]">
         <img
           src="/images/login-banner.png"
@@ -146,7 +145,6 @@ const RegisterPage = () => {
 
         {/* Hiển thị lỗi */}
         {error && <p className="text-red-500 text-sm">{error}</p>}
-
         <Button type="submit" className="cursor-pointer mt-2">
           Đăng ký
         </Button>

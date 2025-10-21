@@ -12,10 +12,9 @@ import { UserRequest, UserResponse } from "@/untils/dto/users.dto";
 import { profile } from "console";
 
 export const userAuthService = {
-  login: async (
-    payload: LoginRequest
-  ): Promise<ApiResponse<LoginResponseData>> => {
+  login: async (payload: LoginRequest): Promise<any> => {
     try {
+      // 1️⃣ Gọi API login để lấy token
       const response = await axiosInstance.post<ApiResponse<LoginResponseData>>(
         "/auth/login",
         payload
@@ -23,10 +22,34 @@ export const userAuthService = {
 
       const data = response.data;
 
-      // Lưu token vào RAM và localStorage
-      memoryStorage.setAccessToken(data.data.accessToken);
-      storage.setToken(data.data.accessToken);
-      return data;
+      // 2️⃣ Lưu token vào RAM và localStorage
+      const accessToken = data.data.accessToken;
+      memoryStorage.setAccessToken(accessToken);
+      storage.setToken(accessToken);
+
+      // 3️⃣ Gọi thêm API profile để lấy thông tin user
+      const profileResponse = await axiosInstance.get<
+        ApiResponse<UserResponse>
+      >("/auth/profile", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const userProfile = profileResponse.data.data;
+
+      // 4️⃣ Lưu userInfo vào localStorage (nếu bạn muốn hiển thị lại sau này)
+      storage.setTokenInfo(userProfile);
+      // 5️⃣ Return kết quả gộp
+      return {
+        status: true,
+        statusCode: 200,
+        message: "Đăng nhập thành công",
+        data: {
+          ...data.data, // gồm accessToken
+          ...userProfile, // gồm email, role, contact, ...
+        },
+      };
     } catch (error: any) {
       throw error.response?.data || { message: "Đăng nhập thất bại" };
     }
@@ -35,6 +58,7 @@ export const userAuthService = {
   logout: () => {
     memoryStorage.setAccessToken(null);
     storage.clearToken();
+    storage.clearTokenInfo();
   },
 
   getAccessToken: () => {

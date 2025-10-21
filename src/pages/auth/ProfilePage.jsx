@@ -6,12 +6,14 @@ import { MapPin, PencilLine, Phone, Save, X } from "lucide-react";
 import ChangePasswordDialog from "@/components/custom/ChangePassword";
 import { userAuthService } from "@/service/auth/userAuth.service";
 import {userProfileValidate} from"@/untils/vaildate/user.validate";
+import { message } from "antd";
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [isUpdate, setIsUpdate] = useState(false);
   const [originalValue, setOriginalValue] = useState({});
   const [loading, setLoading] = useState(true);
+  const [messageApi, contextHolder] = message.useMessage();
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -48,7 +50,7 @@ const ProfilePage = () => {
     const { isValid, errors } = userProfileValidate(profile);
     if (!isValid) {
       let message = Object.values(errors).join("\n");
-      alert("❌ Dữ liệu không hợp lệ:\n" + message);
+      messageApi.error(message);
       return;
     }
 
@@ -62,18 +64,11 @@ const ProfilePage = () => {
 
       const res = await userAuthService.updateProfile(payload);
       const updated = res.data;
-
-      // setProfile({
-      //   fullname: updated.contact?.fullname || "",
-      //   phone_number: updated.contact?.phone_number || "",
-      //   address: updated.contact?.address || "",
-      // });
-
       setIsUpdate(false);
-      alert("Cập nhật hồ sơ thành công!");
+      messageApi.success("Cập nhật hồ sơ thành công!");
     } catch (err) {
       console.error("Lỗi cập nhật:", err);
-      alert("Cập nhật thất bại. Vui lòng thử lại.");
+      messageApi.error("Cập nhật thất bại. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -91,6 +86,7 @@ const ProfilePage = () => {
   return (
     <div className="max-w-[1000px] mx-auto">
       <h1 className="text-3xl font-bold mb-[12px]">Hồ sơ cá nhân</h1>
+      {contextHolder}
       <p className="text-gray-500">
         Quản lý thông tin cá nhân và cài đặt tài khoản
       </p>

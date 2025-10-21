@@ -15,6 +15,7 @@ import { validateChangePassword } from "@/untils/vaildate/change-password.valida
 import { userAuthService } from "@/service/auth/userAuth.service";
 import storage from "@/untils/storage";
 import { memoryStorage } from "@/untils/storage";
+import { message } from "antd";
 
 const ChangePasswordDialog = () => {
   const [open, setOpen] = useState(false);
@@ -23,8 +24,7 @@ const ChangePasswordDialog = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // 👁️ toggle visibility states
+  const [messageApi, contextHolder] = message.useMessage();
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -51,7 +51,7 @@ const ChangePasswordDialog = () => {
       };
       const res = await userAuthService.changePassword(payload);
       if (res?.status) {
-        alert(res.message || "Đổi mật khẩu thành công, vui lòng đăng nhập lại!");
+        messageApi.success(res.message || "Đổi mật khẩu thành công, vui lòng đăng nhập lại!");
         memoryStorage.setAccessToken(null);
         storage.clearToken();
         window.location.href = "/login";
@@ -95,6 +95,7 @@ const ChangePasswordDialog = () => {
 
         <div className="grid gap-4 py-4">
           {/* Mật khẩu hiện tại */}
+          {contextHolder}
           <div className="grid gap-2">
             <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
             <Input

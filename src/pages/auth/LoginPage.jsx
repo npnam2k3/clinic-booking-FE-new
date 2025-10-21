@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { userAuthService } from "@/service/auth/userAuth.service";
 import { loginValidate } from "@/untils/vaildate/login.validate";
+import { message } from "antd";
+import storage from "@/untils/storage";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-
+  const [messageApi, contextHolder] = message.useMessage();
   const [values, setValues] = useState({
     email: "",
     password: "",
@@ -35,16 +37,20 @@ const LoginPage = () => {
     try {
       setLoading(true);
       const res = await userAuthService.login(values);
-
       if (res.status) {
-        alert("Đăng nhập thành công!");
-        navigate("/"); // Chuyển hướng về trang chủ hoặc admin tùy vai trò
+        if(res.data.role.role_name === "ADMIN" || res.data.role.role_name === "STAFF"){
+            messageApi.success(res.message || "Đăng nhập thành công!");
+            navigate("/admin");
+        }else{      
+          messageApi.success(res.message || "Đăng nhập thành công!");
+          navigate("/");
+        }
       } else {
-        alert(res.message || "Đăng nhập thất bại");
+        messageApi.error(res.message || "Đăng nhập thất bại");
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert(error.message || "Đăng nhập thất bại");
+      messageApi.error(error.message || "Đăng nhập thất bại");
     } finally {
       setLoading(false);
     }
@@ -52,6 +58,7 @@ const LoginPage = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 gap-x-[20px]">
+      {contextHolder}
       {/* Banner bên trái */}
       <div className="w-[600px] hidden md:block">
         <img
