@@ -10,9 +10,20 @@ import {
 import { ROUTE } from "@/constants/route-constant";
 import { History, LogOut, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { userAuthService } from "@/service/auth/userAuth.service";
 
 export function UserAvatarMenu() {
   const navigate = useNavigate();
+  const handleLogout = () => {
+    // Gọi service logout để xóa token và userId
+    userAuthService.logout();
+
+    // Chuyển về trang đăng nhập
+    navigate(ROUTE.LOGIN);
+
+    // Reload trang để cập nhật lại header
+    window.location.reload();
+  };
   return (
     <DropdownMenu>
       {/* click vào để mở menu */}
@@ -48,7 +59,7 @@ export function UserAvatarMenu() {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => console.log("Đăng xuất")}
+          onClick={handleLogout}
           className="text-red-500 focus:text-red-500"
         >
           <div className="flex gap-x-[8px] items-center cursor-pointer">

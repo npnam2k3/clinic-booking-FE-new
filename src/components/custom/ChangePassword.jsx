@@ -10,6 +10,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Eye, EyeOff } from "lucide-react";
+import { validateChangePassword } from "@/untils/vaildate/change-password.validate";
+import { userAuthService } from "@/service/auth/userAuth.service";
+import storage from "@/untils/storage";
+import { memoryStorage } from "@/untils/storage";
+import { message } from "antd";
 
 const ChangePasswordDialog = () => {
   const [open, setOpen] = useState(false);
@@ -17,27 +23,57 @@ const ChangePasswordDialog = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSave = () => {
-    // if (newPassword !== confirmPassword) {
-    //   setError("Mật khẩu xác nhận không khớp!");
-    //   return;
-    // }
-    // if (newPassword.length < 6) {
-    //   setError("Mật khẩu mới phải có ít nhất 6 ký tự!");
-    //   return;
-    // }
+  const handleSave = async () => {
+    setError("");
 
-    // setError("");
-    // // TODO: gọi API đổi mật khẩu ở đây
-    // console.log("Mật khẩu hiện tại:", currentPassword);
-    // console.log("Mật khẩu mới:", newPassword);
-    // alert("Đổi mật khẩu thành công ✅");
-    setOpen(false);
+    const errorMsg = validateChangePassword({
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
+
+    if (errorMsg) {
+      setError(errorMsg);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const payload = {
+        current_password: currentPassword,
+        new_password: newPassword,
+        confirm_password: confirmPassword
+      };
+      const res = await userAuthService.changePassword(payload);
+      if (res?.status) {
+        messageApi.success(res.message || "Đổi mật khẩu thành công, vui lòng đăng nhập lại!");
+        memoryStorage.setAccessToken(null);
+        storage.clearToken();
+        window.location.href = "/login";
+      } else {
+        setError(res?.message || "Đổi mật khẩu thất bại, vui lòng thử lại!");
+      }
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+          "Đổi mật khẩu thất bại. Vui lòng thử lại!"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
     setOpen(false);
+    setError("");
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
   };
 
   return (
@@ -58,6 +94,8 @@ const ChangePasswordDialog = () => {
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
+          {/* Mật khẩu hiện tại */}
+          {contextHolder}
           <div className="grid gap-2">
             <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
             <Input
@@ -69,26 +107,46 @@ const ChangePasswordDialog = () => {
             />
           </div>
 
-          <div className="grid gap-2">
+          {/* Mật khẩu mới */}
+          <div className="grid gap-2 relative">
             <Label htmlFor="newPassword">Mật khẩu mới</Label>
-            <Input
-              id="newPassword"
-              type="password"
-              placeholder="Nhập mật khẩu mới"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                id="newPassword"
+                type={showNewPassword ? "text" : "password"}
+                placeholder="Nhập mật khẩu mới"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
-          <div className="grid gap-2">
+          {/* Xác nhận mật khẩu mới */}
+          <div className="grid gap-2 relative">
             <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="Nhập lại mật khẩu mới"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Nhập lại mật khẩu mới"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
@@ -98,11 +156,16 @@ const ChangePasswordDialog = () => {
           <Button
             className="bg-gray-200 text-gray-800 cursor-pointer hover:bg-gray-400"
             onClick={handleCancel}
+            disabled={loading}
           >
             Hủy
           </Button>
-          <Button onClick={handleSave} className=" cursor-pointer">
-            Lưu
+          <Button
+            onClick={handleSave}
+            disabled={loading}
+            className="cursor-pointer"
+          >
+            {loading ? "Đang lưu..." : "Lưu"}
           </Button>
         </DialogFooter>
       </DialogContent>
