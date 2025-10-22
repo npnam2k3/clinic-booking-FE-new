@@ -1,4 +1,5 @@
 // src/utils/validate/user.validate.ts
+import * as yup from "yup";
 
 export interface UserProfileValidateResult {
   isValid: boolean;
@@ -44,3 +45,22 @@ export const userProfileValidate = (profile: {
     errors,
   };
 };
+export const userSchema = yup.object({
+  email: yup
+    .string()
+    .required("Vui lòng nhập email")
+    .email("Định dạng email không hợp lệ"),
+  fullname: yup
+    .string()
+    .required("Vui lòng nhập họ tên")
+    .max(255, "Tên không được vượt quá 255 ký tự"),
+  phone_number: yup
+    .string()
+    .required("Vui lòng nhập số điện thoại")
+    .matches(/^[0-9]{9,11}$/, "Số điện thoại không hợp lệ"),
+  address: yup
+    .string()
+    .required("Vui lòng nhập địa chỉ")
+    .max(500, "Địa chỉ không được vượt quá 500 ký tự"),
+  role_id: yup.number().required("Vui lòng chọn vai trò người dùng"),
+});

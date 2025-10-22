@@ -14,26 +14,28 @@ const UserTable = ({ data, onEdit, onDelete }) => {
           <tr>
             <th className="p-4 text-left">Họ tên</th>
             <th className="p-4 text-left">Email</th>
-            <th className="p-4 text-left">Vai trò</th>
+            {/* <th className="p-4 text-left">Vai trò</th> */}
             <th className="p-4 text-left">Số điện thoại</th>
             <th className="p-4 text-left">Địa chỉ</th>
-            <th className="p-4 text-left">Trạng thái</th>
+            {/* <th className="p-4 text-left">Trạng thái</th> */}
             <th className="p-4 text-left">Thao tác</th>
           </tr>
         </thead>
         <tbody>
           {data.map((u) => (
             <tr key={u.id} className="border-b hover:bg-gray-50">
-              <td className="p-4">{u.fullname}</td>
+              <td className="p-4">{u.contact.fullname}</td>
               <td className="p-4">{u.email}</td>
-              <td className="p-4 capitalize">{u.role}</td>
-              <td className="p-4">{u.phone_number}</td>
-              <td className="p-4">{u.address}</td>
-              <td className="p-4">
+              {/* <td className="p-4">
+                {user.role?.role_name || "Không xác định"}
+              </td> */}
+              <td className="p-4">{u.contact.phone_number}</td>
+              <td className="p-4">{u.contact.address}</td>
+              {/* <td className="p-4">
                 <Badge className={`${statusMap[u.status]?.color || ""}`}>
                   {statusMap[u.status]?.text}
                 </Badge>
-              </td>
+              </td> */}
               <td className="p-4 flex gap-2">
                 {u.status === "active" ? (
                   <button
