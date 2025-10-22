@@ -1,32 +1,108 @@
-import { useState } from "react";
-import { Plus, Search } from "lucide-react";
-import { mockSpecialties } from "@/data/mockData";
-
+import { useEffect, useState, useCallback } from "react";
+import { Plus, Search, RefreshCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import SpecialtyFormModal from "@/pages/admin/Specialties/components/SpecialtyFormModal";
 import SpecialtiesTable from "@/pages/admin/Specialties/components/SpecialtiesTable";
+import { SpecialtyService } from "@/service/specialty/specialty.service";
+import { message } from "antd";
+import { useSearchParams } from "react-router-dom"; // ✅ để đọc/ghi query trên URL
 
 const SpecialtiesPage = () => {
-  const [specialties, setSpecialties] = useState(mockSpecialties);
+  const [specialties, setSpecialties] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedSpecialty, setSelectedSpecialty] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredSpecialties = specialties.filter((specialty) =>
-    specialty.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // ✅ hook cho query param
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  // Lấy từ khóa từ URL (nếu có)
+  const initialKeyword = searchParams.get("keyword") || "";
+
+  const [searchInput, setSearchInput] = useState(initialKeyword);
+  const [searchTerm, setSearchTerm] = useState(initialKeyword);
+
+  // 🟢 Hàm load danh sách
+  const fetchSpecialties = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await SpecialtyService.getAll();
+
+      const mapped = data.map((item) => ({
+        id: item.specialization_id,
+        name: item.specialization_name,
+        description: item.description,
+        createdAt: item.createdAt.split("T")[0],
+      }));
+
+      setSpecialties(mapped);
+    } catch (err) {
+      console.error("Lỗi khi tải danh sách chuyên khoa:", err);
+      message.error("Không thể tải danh sách chuyên khoa!");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSpecialties();
+  }, [fetchSpecialties]);
+
+  // ✏️ Sửa
   const handleEdit = (specialty) => {
     setSelectedSpecialty(specialty);
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = (specialtyId) => {
+  // ❌ Xóa
+  const handleDelete = async (specialtyId) => {
     if (confirm("Bạn có chắc chắn muốn xóa chuyên khoa này?")) {
-      setSpecialties(specialties.filter((s) => s.id !== specialtyId));
+      try {
+        await SpecialtyService.delete(specialtyId);
+        message.success("Đã xóa chuyên khoa thành công!");
+        fetchSpecialties(); // reload danh sách
+      } catch (err) {
+        console.error("Lỗi khi xóa chuyên khoa:", err);
+        message.error("Không thể xóa chuyên khoa. Vui lòng thử lại!");
+      }
     }
   };
+
+  // ✅ Sau khi thêm hoặc sửa
+  const handleAfterSave = () => {
+    fetchSpecialties();
+  };
+
+  // 🔍 Khi ấn nút tìm kiếm
+  const handleSearch = () => {
+    const keyword = searchInput.trim();
+    setSearchTerm(keyword);
+    if (keyword) {
+      setSearchParams({ keyword }); // ✅ ghi vào URL
+    } else {
+      setSearchParams({}); // xoá param nếu rỗng
+    }
+  };
+
+  // 🔄 Làm mới danh sách (xoá keyword và reload)
+  const handleReset = () => {
+    setSearchInput("");
+    setSearchTerm("");
+    setSearchParams({});
+    fetchSpecialties();
+  };
+
+  // Lọc client-side
+  const filteredSpecialties = specialties.filter((specialty) =>
+    specialty.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="p-6 text-center text-gray-600">Đang tải dữ liệu...</div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -52,17 +128,39 @@ const SpecialtiesPage = () => {
 
         {/* Search */}
         <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Tìm kiếm theo tên chuyên khoa..."
-              className="px-10"
-            />
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Nhập tên chuyên khoa..."
+                className="px-10"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSearch();
+                }}
+              />
+            </div>
+
+            <button
+              onClick={handleSearch}
+              className="rounded-md bg-orange-600 text-white px-4 py-2 hover:bg-orange-700 cursor-pointer"
+            >
+              Tìm kiếm
+            </button>
+
+            <button
+              onClick={handleReset}
+              className="rounded-md border border-gray-300 text-gray-700 px-3 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2"
+            >
+              <RefreshCcw className="h-4 w-4" />
+              Làm mới
+            </button>
           </div>
         </div>
 
-        {/* Specialties Table */}
+        {/* Table */}
         <SpecialtiesTable
           handleDelete={handleDelete}
           handleEdit={handleEdit}
@@ -73,21 +171,7 @@ const SpecialtiesPage = () => {
         {isAddModalOpen && (
           <SpecialtyFormModal
             onClose={() => setIsAddModalOpen(false)}
-            onSave={(newSpecialty) => {
-              setSpecialties([
-                ...specialties,
-                {
-                  ...newSpecialty,
-                  id: `SPEC${String(specialties.length + 1).padStart(3, "0")}`,
-                  code: `SPEC${String(specialties.length + 1).padStart(
-                    3,
-                    "0"
-                  )}`,
-                  createdAt: new Date().toISOString().split("T")[0],
-                },
-              ]);
-              setIsAddModalOpen(false);
-            }}
+            onSave={handleAfterSave}
           />
         )}
 
@@ -99,15 +183,7 @@ const SpecialtiesPage = () => {
               setIsEditModalOpen(false);
               setSelectedSpecialty(null);
             }}
-            onSave={(updatedSpecialty) => {
-              setSpecialties(
-                specialties.map((s) =>
-                  s.id === updatedSpecialty.id ? updatedSpecialty : s
-                )
-              );
-              setIsEditModalOpen(false);
-              setSelectedSpecialty(null);
-            }}
+            onSave={handleAfterSave}
           />
         )}
       </div>

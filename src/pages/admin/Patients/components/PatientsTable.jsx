@@ -11,7 +11,7 @@ const PatientsTable = ({ patients, handleEdit, handleDelete, handleView }) => {
               <th className="p-4 font-medium">Họ tên</th>
               <th className="p-4 font-medium">Giới tính</th>
               <th className="p-4 font-medium">Ngày sinh</th>
-              <th className="p-4 font-medium">Số điện thoại</th>
+              {/* <th className="p-4 font-medium">Số điện thoại</th> */}
               <th className="p-4 font-medium">Địa chỉ</th>
               <th className="p-4 font-medium">Ngày tạo</th>
               <th className="p-4 font-medium">Thao tác</th>
@@ -34,13 +34,28 @@ const PatientsTable = ({ patients, handleEdit, handleDelete, handleView }) => {
             ) : (
               patients.map((patient) => (
                 <tr key={patient.id} className="border-b last:border-0">
-                  <td className="p-4 text-sm">{patient.id}</td>
-                  <td className="p-4 text-sm font-medium">{patient.name}</td>
+                  <td className="p-4 text-sm">{patient.patient_code}</td>
+                  <td className="p-4 text-sm font-medium">
+                    {patient.fullname}
+                  </td>
                   <td className="p-4 text-sm">{patient.gender}</td>
-                  <td className="p-4 text-sm">{patient.dob}</td>
-                  <td className="p-4 text-sm">{patient.phone}</td>
+                  <td className="p-4 text-sm">{patient.date_of_birth}</td>
+                  {/* <td className="p-4 text-sm">
+                    {patient.contact.phone_number || "--"}
+                  </td> */}
                   <td className="p-4 text-sm">{patient.address}</td>
-                  <td className="p-4 text-sm">{patient.createdAt}</td>
+                  <td className="p-4 text-sm">
+                    {new Date(patient.createdAt).toLocaleString("vi-VN", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: false,
+                    })}
+                  </td>
+
                   <td className="p-4 text-sm">
                     <div className="flex items-center gap-3">
                       <button

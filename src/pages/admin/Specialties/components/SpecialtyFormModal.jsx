@@ -1,18 +1,54 @@
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import ReactQuill from "react-quill-new";
+import { SpecialtyService } from "@/service/specialty/specialty.service";
+import { message } from "antd";
 
 const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [formData, setFormData] = useState(
     specialty || {
       name: "",
       description: "",
     }
   );
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave(formData);
+    setLoading(true);
+
+    try {
+      if (!formData.name.trim()) {
+        messageApi.warning("Vui lòng nhập tên chuyên khoa!");
+        setLoading(false);
+        return;
+      }
+
+      if (specialty) {
+        // Cập nhật chuyên khoa
+        await SpecialtyService.update(specialty.id, {
+          specialization_name: formData.name,
+          description: formData.description,
+        });
+        messageApi.success("Cập nhật chuyên khoa thành công!");
+      } else {
+        // ➕ Thêm mới chuyên khoa
+        await SpecialtyService.create({
+          specialization_name: formData.name,
+          description: formData.description,
+        });
+        messageApi.success("Thêm chuyên khoa thành công!");
+      }
+
+      // Reload danh sách ở trang cha
+      onSave?.();
+      onClose();
+    } catch (error) {
+      messageApi.error("Không thể lưu chuyên khoa, vui lòng thử lại!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -23,7 +59,8 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
           "color-mix(in oklab, var(--color-black) 50%, transparent)",
       }}
     >
-      <div className="w-full max-w-md rounded-lg bg-white p-6">
+      {contextHolder}
+      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
         <h2 className="mb-4 text-xl font-bold">
           {specialty ? "Chỉnh sửa chuyên khoa" : "Thêm chuyên khoa mới"}
         </h2>
@@ -34,6 +71,7 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* 🔹 Tên chuyên khoa */}
           <div>
             <label className="mb-1 block text-sm font-medium">
               Tên chuyên khoa <span className="text-red-500">*</span>
@@ -41,7 +79,6 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
             <Input
               type="text"
               placeholder="Ví dụ: Tim mạch"
-              className=""
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
@@ -50,33 +87,51 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
             />
           </div>
 
+          {/* 🔹 Mô tả */}
           <div>
-            <label className="mb-1 block text-sm font-medium">Mô tả</label>
+            <label className="mb-1 block text-sm font-medium">
+              Mô tả (tối đa 500 ký tự)
+            </label>
             <div className="rounded-lg">
               <ReactQuill
                 className="h-[200px]"
                 value={formData.description}
-                onChange={(value) =>
-                  setFormData({ ...formData, description: value })
-                }
+                onChange={(value) => {
+                  const plainText = value.replace(/<[^>]+>/g, "");
+                  if (plainText.length <= 500) {
+                    setFormData({ ...formData, description: value });
+                  } else {
+                    message.warning("Mô tả không được vượt quá 500 ký tự!");
+                  }
+                }}
                 placeholder="Mô tả về chuyên môn, kinh nghiệm làm việc..."
               />
             </div>
+            <p className="text-sm text-gray-500 text-right mt-1">
+              {formData.description.replace(/<[^>]+>/g, "").length || 0}/500
+            </p>
           </div>
 
+          {/* 🔹 Nút hành động */}
           <div className="flex justify-end gap-3 pt-4 mt-[40px]">
             <button
               type="button"
               onClick={onClose}
+              disabled={loading}
               className="rounded-lg cursor-pointer border border-gray-300 px-4 py-2 hover:bg-gray-50"
             >
               Hủy
             </button>
             <button
               type="submit"
+              disabled={loading}
               className="rounded-lg cursor-pointer bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
             >
-              Cập nhật
+              {loading
+                ? "Đang lưu..."
+                : specialty
+                ? "Cập nhật"
+                : "Thêm chuyên khoa"}
             </button>
           </div>
         </form>
@@ -84,4 +139,5 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
     </div>
   );
 };
+
 export default SpecialtyFormModal;
