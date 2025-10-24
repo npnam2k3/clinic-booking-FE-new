@@ -30,28 +30,36 @@ const AppointmentDetailModal = ({ appointment, onClose }) => {
         <div className="space-y-3">
           <div>
             <p className="text-sm text-gray-600">Mã lịch khám</p>
-            <p className="text-lg font-bold">{appointment.id}</p>
+            <p className="text-lg font-bold">
+              {appointment.doctor_slot.slot_id}
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-gray-600">Thông tin bệnh nhân</p>
-              <p className="font-medium">{appointment.patientName}</p>
+              <p className="text-sm text-gray-600">Tên bệnh nhân</p>
+              <p className="font-medium">{appointment.patient.fullname}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Bác sĩ khám</p>
-              <p className="font-medium">{appointment.doctorName}</p>
+              <p className="font-medium">
+                {appointment.doctor_slot.doctor.fullname}
+              </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Ngày khám</p>
-              <p className="font-medium">{appointment.date}</p>
+              <p className="font-medium">{appointment.doctor_slot.slot_date}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Giờ khám</p>
-              <p className="font-medium">{appointment.time}</p>
+              <p className="font-medium">
+                {" "}
+                {appointment.doctor_slot.start_at} -{" "}
+                {appointment.doctor_slot.end_at}
+              </p>
             </div>
           </div>
 
