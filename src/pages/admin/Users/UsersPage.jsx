@@ -26,7 +26,9 @@ const UsersPage = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
 
-  // Hàm tải danh sách nhân viên
+  // ===============================
+  // TẢI DANH SÁCH NHÂN VIÊN
+  // ===============================
   const fetchStaff = useCallback(async () => {
     try {
       setLoading(true);
@@ -40,7 +42,9 @@ const UsersPage = () => {
     }
   }, []);
 
-  // Hàm tải danh sách khách hàng
+  // ===============================
+  // TẢI DANH SÁCH KHÁCH HÀNG
+  // ===============================
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
@@ -54,7 +58,9 @@ const UsersPage = () => {
     }
   }, []);
 
-  // Gọi API lần đầu khi mở trang hoặc đổi tab
+  // ===============================
+  // LOAD DỮ LIỆU KHI CHUYỂN TAB
+  // ===============================
   useEffect(() => {
     if (activeTab === "staff") {
       fetchStaff();
@@ -63,7 +69,9 @@ const UsersPage = () => {
     }
   }, [activeTab, fetchStaff, fetchUsers]);
 
-  // Khi người dùng ấn "Tìm kiếm"
+  // ===============================
+  // TÌM KIẾM
+  // ===============================
   const handleSearch = () => {
     const keyword = searchInput.trim();
     setSearchTerm(keyword);
@@ -71,7 +79,9 @@ const UsersPage = () => {
     else setSearchParams({});
   };
 
-  // Làm mới danh sách
+  // ===============================
+  // LÀM MỚI DANH SÁCH
+  // ===============================
   const handleReset = () => {
     setSearchInput("");
     setSearchTerm("");
@@ -80,7 +90,9 @@ const UsersPage = () => {
     else fetchUsers();
   };
 
-  // Lọc client-side
+  // ===============================
+  // LỌC DỮ LIỆU CLIENT-SIDE
+  // ===============================
   const filteredStaff = staffList.filter((s) => {
     const kw = searchTerm.toLowerCase();
     return (
@@ -99,7 +111,9 @@ const UsersPage = () => {
     );
   });
 
-  // Thêm hoặc cập nhật
+  // ===============================
+  // LƯU / THÊM / XÓA
+  // ===============================
   const handleSaveEdit = async () => {
     if (activeTab === "staff") fetchStaff();
     else fetchUsers();
@@ -112,7 +126,6 @@ const UsersPage = () => {
     setIsAddStaffOpen(false);
   };
 
-  // Xóa nhân viên
   const handleDeleteStaff = async (id) => {
     if (confirm("Bạn có chắc chắn muốn xóa nhân viên này?")) {
       try {
@@ -126,7 +139,6 @@ const UsersPage = () => {
     }
   };
 
-  // Xóa khách hàng
   const handleDeleteUser = async (id) => {
     if (confirm("Bạn có chắc chắn muốn xóa khách hàng này?")) {
       try {
@@ -140,6 +152,9 @@ const UsersPage = () => {
     }
   };
 
+  // ===============================
+  // LOADING STATE
+  // ===============================
   if (loading) {
     return (
       <div className="p-6 text-center text-gray-600">
@@ -148,6 +163,9 @@ const UsersPage = () => {
     );
   }
 
+  // ===============================
+  // JSX CHÍNH
+  // ===============================
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto max-w-7xl">
@@ -161,7 +179,7 @@ const UsersPage = () => {
             <TabsTrigger value="customers">Khách hàng</TabsTrigger>
           </TabsList>
 
-          {/* TAB NHÂN VIÊN */}
+          {/* ======================= TAB NHÂN VIÊN ======================= */}
           <TabsContent value="staff">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3 w-1/2">
@@ -197,10 +215,12 @@ const UsersPage = () => {
                 setIsEditOpen(true);
               }}
               onDelete={(userId) => handleDeleteStaff(userId)}
+              onReload={fetchStaff} // reload sau khi lock/unlock
+              showLock={true} // chỉ nhân viên mới có khoá/mở khoá
             />
           </TabsContent>
 
-          {/* TAB KHÁCH HÀNG */}
+          {/* ======================= TAB KHÁCH HÀNG ======================= */}
           <TabsContent value="customers">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3 w-1/2">
@@ -232,11 +252,12 @@ const UsersPage = () => {
                 setIsEditOpen(true);
               }}
               onDelete={(userId) => handleDeleteUser(userId)}
+              showLock={false} // khách hàng KHÔNG có chức năng khóa/mở khóa
             />
           </TabsContent>
         </Tabs>
 
-        {/* Modal chỉnh sửa người dùng */}
+        {/* ======================= MODAL CHỈNH SỬA ======================= */}
         {isEditOpen && selectedUser && (
           <EditUserModal
             user={selectedUser}
@@ -248,7 +269,7 @@ const UsersPage = () => {
           />
         )}
 
-        {/* Modal thêm nhân viên */}
+        {/* ======================= MODAL THÊM NHÂN VIÊN ======================= */}
         {isAddStaffOpen && (
           <AddStaffModal
             onClose={() => setIsAddStaffOpen(false)}

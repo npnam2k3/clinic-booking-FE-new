@@ -12,10 +12,9 @@ export const authorizedRequest = async (
   const token = memoryStorage.getAccessToken() || storage.getToken();
   if (!token) throw new Error("Không tìm thấy token — vui lòng đăng nhập lại");
 
-  // ✅ đảm bảo headers luôn là object
   const headers = {
     Authorization: `Bearer ${token}`,
-    ...(config.headers || {}), // fix: tránh lỗi nếu headers chưa tồn tại
+    ...(config.headers || {}),
   };
 
   const options: AxiosRequestConfig = { ...config, headers };

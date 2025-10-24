@@ -11,7 +11,7 @@ const AppointmentsTables = ({
       pending: { bg: "bg-orange-500", text: "Pending" },
       confirmed: { bg: "bg-emerald-500", text: "Confirmed" },
       completed: { bg: "bg-blue-500", text: "Completed" },
-      cancelled: { bg: "bg-red-500", text: "Cancelled" },
+      canceled: { bg: "bg-red-500", text: "Cancelled" },
     };
     return badges[status] || badges.pending;
   };
@@ -23,7 +23,7 @@ const AppointmentsTables = ({
             <tr className="text-left text-sm text-gray-600">
               <th className="p-4 font-medium">Mã lịch</th>
               <th className="p-4 font-medium">Bệnh nhân</th>
-              <th className="p-4 font-medium">Bác sĩ</th>
+              {/* <th className="p-4 font-medium">Bác sĩ</th> */}
               <th className="p-4 font-medium">Ngày khám</th>
               <th className="p-4 font-medium">Giờ khám</th>
               <th className="p-4 font-medium">Trạng thái</th>
@@ -36,11 +36,13 @@ const AppointmentsTables = ({
               const badge = getStatusBadge(apt.status);
               return (
                 <tr key={apt.id} className="border-b last:border-0">
-                  <td className="p-4 text-sm">{apt.id}</td>
-                  <td className="p-4 text-sm">{apt.patientName}</td>
-                  <td className="p-4 text-sm">{apt.doctorName}</td>
-                  <td className="p-4 text-sm">{apt.date}</td>
-                  <td className="p-4 text-sm">{apt.time}</td>
+                  <td className="p-4 text-sm">{apt.doctor_slot.slot_id}</td>
+                  <td className="p-4 text-sm">{apt.patient.fullname}</td>
+                  {/* <td className="p-4 text-sm">{apt.doctorName}</td> */}
+                  <td className="p-4 text-sm">{apt.doctor_slot.slot_date}</td>
+                  <td className="p-4 text-sm">
+                    {apt.doctor_slot.start_at} - {apt.doctor_slot.end_at}
+                  </td>
                   <td className="p-4 text-sm">
                     <div className="relative">
                       <Badge
