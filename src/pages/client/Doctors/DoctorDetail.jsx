@@ -92,6 +92,16 @@ const DoctorDetail = () => {
   // ===============================
   const handleClickComebackBtn = () => navigate(-1);
 
+  //========================== Thời gian trong tuần ==========================
+  const dayMap = {
+    Monday: "Thứ Hai",
+    Tuesday: "Thứ Ba",
+    Wednesday: "Thứ Tư",
+    Thursday: "Thứ Năm",
+    Friday: "Thứ Sáu",
+    Saturday: "Thứ Bảy",
+    Sunday: "Chủ Nhật",
+  };
   // ===============================
   // JSX CHÍNH
   // ===============================
@@ -159,17 +169,39 @@ const DoctorDetail = () => {
                   <Clock size={20} />
                   <span>Lịch làm việc hàng tuần</span>
                 </div>
-                {doctor.work_schedules?.length ? (
-                  <div className="flex flex-wrap gap-[10px]">
+
+                {doctor.work_schedules && doctor.work_schedules.length > 0 ? (
+                  <div className="space-y-3">
                     {[
                       ...new Set(
                         doctor.work_schedules.map((s) => s.day_of_week)
                       ),
-                    ].map((day) => (
-                      <Badge key={day} className="bg-gray-200 text-gray-950">
-                        {dayjs().day(day).format("dddd")}
-                      </Badge>
-                    ))}
+                    ].map((day) => {
+                      const schedulesForDay = doctor.work_schedules.filter(
+                        (s) => s.day_of_week === day
+                      );
+                      return (
+                        <div
+                          key={day}
+                          className="border rounded-lg p-3 bg-gray-50"
+                        >
+                          <h4 className="font-semibold text-gray-800 mb-2">
+                            {dayMap[day] || day}
+                          </h4>
+                          <ul className="text-sm text-gray-600 list-disc ml-5 space-y-1">
+                            {schedulesForDay.map((s) => (
+                              <li key={s.schedule_id}>
+                                {s.start_time.slice(0, 5)} -{" "}
+                                {s.end_time.slice(0, 5)}{" "}
+                                <span className="text-gray-500">
+                                  ({s.note})
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-gray-500">Chưa có lịch làm việc.</p>
