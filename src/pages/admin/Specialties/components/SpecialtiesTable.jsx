@@ -7,7 +7,7 @@ const SpecialtiesTable = ({ specialties, handleEdit, handleDelete }) => {
         <table className="w-full">
           <thead className="border-b bg-gray-50">
             <tr className="text-left text-sm text-gray-600">
-              <th className="p-4 font-medium">Mã chuyên khoa</th>
+              {/* <th className="p-4 font-medium">Mã chuyên khoa</th> */}
               <th className="p-4 font-medium">Tên chuyên khoa</th>
               <th className="p-4 font-medium">Mô tả</th>
               <th className="p-4 font-medium">Ngày tạo</th>
@@ -31,11 +31,16 @@ const SpecialtiesTable = ({ specialties, handleEdit, handleDelete }) => {
             ) : (
               specialties.map((specialty) => (
                 <tr key={specialty.id} className="border-b last:border-0">
-                  <td className="p-4 text-sm">{specialty.code}</td>
+                  {/* <td className="p-4 text-sm">{specialty.specialization_id}</td> */}
                   <td className="p-4 text-sm font-medium">{specialty.name}</td>
                   <td className="p-4 text-sm text-gray-600">
-                    {specialty.description}
+                    <span title={specialty.description}>
+                      {specialty.description.length > 100
+                        ? specialty.description.slice(0, 100) + "..."
+                        : specialty.description}
+                    </span>
                   </td>
+
                   <td className="p-4 text-sm">{specialty.createdAt}</td>
                   <td className="p-4 text-sm">
                     <div className="flex items-center gap-3">

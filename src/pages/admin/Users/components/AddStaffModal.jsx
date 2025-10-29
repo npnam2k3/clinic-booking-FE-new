@@ -8,39 +8,65 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Eye, EyeOff, Asterisk } from "lucide-react";
 import { useState } from "react";
+import { message } from "antd";
+import { StaffService } from "@/service/staff/staff.service";
 
 export default function AddStaffModal({ onClose, onSave }) {
+  // Trạng thái hiển thị mật khẩu
   const [showPassword, setShowPassword] = useState(false);
+
+  // Dữ liệu form
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     fullname: "",
     phone_number: "",
     address: "",
-    role: "",
-    status: "",
   });
 
+  // Trạng thái loading khi submit
+  const [loading, setLoading] = useState(false);
+
+  // Hàm cập nhật giá trị form
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e) => {
+  // Hàm submit
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    try {
+      setLoading(true);
+
+      // Gọi API tạo nhân viên mới
+      const res = await StaffService.create({
+        email: formData.email,
+        password: formData.password,
+        fullname: formData.fullname,
+        phone_number: formData.phone_number,
+        address: formData.address,
+        is_block: false,
+      });
+
+      if (res.status) {
+        message.success("Thêm nhân viên mới thành công!");
+        onSave(); // Reload danh sách ở UsersPage
+        onClose(); // Đóng modal
+      } else {
+        message.error(res.message || "Không thể thêm nhân viên!");
+      }
+    } catch (err) {
+      console.error("Lỗi khi tạo nhân viên:", err);
+      message.error(err.message || "Thêm nhân viên thất bại!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={true}>
+    <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-[500px] max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold">
@@ -91,7 +117,7 @@ export default function AddStaffModal({ onClose, onSave }) {
             </div>
           </div>
 
-          {/* Fullname */}
+          {/* Họ và tên */}
           <div>
             <div className="flex items-center gap-1 mb-2">
               <Label htmlFor="fullname">Họ và tên</Label>
@@ -106,7 +132,7 @@ export default function AddStaffModal({ onClose, onSave }) {
             />
           </div>
 
-          {/* Phone number */}
+          {/* Số điện thoại */}
           <div>
             <div className="flex items-center gap-1 mb-2">
               <Label htmlFor="phone_number">Số điện thoại</Label>
@@ -121,7 +147,7 @@ export default function AddStaffModal({ onClose, onSave }) {
             />
           </div>
 
-          {/* Address */}
+          {/* Địa chỉ */}
           <div>
             <Label htmlFor="address" className="mb-2 block">
               Địa chỉ
@@ -136,10 +162,15 @@ export default function AddStaffModal({ onClose, onSave }) {
 
           <DialogFooter className="mt-6">
             <div className="flex justify-between w-full gap-x-4">
-              <Button type="submit" className="flex-1 cursor-pointer">
-                Tạo tài khoản
+              <Button
+                type="submit"
+                disabled={loading}
+                className="flex-1 cursor-pointer"
+              >
+                {loading ? "Đang tạo..." : "Tạo tài khoản"}
               </Button>
               <Button
+                type="button"
                 onClick={onClose}
                 className="flex-1 cursor-pointer bg-gray-400 hover:bg-gray-500"
               >

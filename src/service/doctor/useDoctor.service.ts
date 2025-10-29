@@ -1,92 +1,79 @@
+// doctor.service.ts
+import { authorizedRequest } from "../authorized-request";
 import { ApiResponse } from "@/untils/dto/api-respone.dto";
-import axiosInstance from "../api/axios-instance.service";
-import { DoctorDto } from "@/untils/dto/doctors.dto";
+import { DoctorDto, DoctorListResponse } from "@/untils/dto/doctor.dto";
 
-const apiUrl = "/doctors";
-export const useDoctorService = {
-  getAllDoctors: async (
-    limit?: number,
-    page?: number,
-    keyword?: string
-  ): Promise<any> => {
-    const params = {
-      limit: limit ?? "",
-      page: page ?? "",
-      keyword: keyword ?? "",
-    };
-    try {
-      const response = await axiosInstance.get<ApiResponse<DoctorDto>>(
-        `${apiUrl}`,
-        { params }
-      );
-      return response.data;
-    } catch (error: any) {
-      throw (
-        error.response?.data || {
-          message: "Không thể tải danh sách bác sĩ",
-        }
-      );
-    }
+const BASE_URL = "/doctors";
+
+export const DoctorService = {
+  // ========================
+  // LẤY DANH SÁCH BÁC SĨ
+  // ========================
+  async getAll(params?: Record<string, any>): Promise<DoctorDto[]> {
+    const res = await authorizedRequest("get", BASE_URL, null, { params });
+    // API trả về { data: { doctors: [...] } }
+    return res.data?.data?.doctors || [];
   },
-  getDoctorById: async (doctorId: string): Promise<any> => {
-    try {
-      const response = await axiosInstance.get<ApiResponse<DoctorDto>>(
-        `${apiUrl}/${doctorId}`
-      );
-      return response.data;
-    } catch (error: any) {
-      throw (
-        error.response?.data || {
-          message: "Không thể tải thông tin bác sĩ",
-        }
-      );
-    }
+
+  // ========================
+  // LẤY CHI TIẾT BÁC SĨ
+  // ========================
+  async getById(doctorId: number): Promise<any> {
+    const res = await authorizedRequest("get", `${BASE_URL}/${doctorId}`);
+    console.log("DoctorService.getById response:", res);
+    return res.data?.data;
   },
-  createDoctor: async (doctorData: DoctorDto): Promise<any> => {
-    try {
-      const response = await axiosInstance.post<ApiResponse<DoctorDto>>(
-        `${apiUrl}`,
-        doctorData
-      );
-      return response.data;
-    } catch (error: any) {
-      throw (
-        error.response?.data || {
-          message: "Không thể tạo bác sĩ",
-        }
-      );
-    }
+
+  // ========================
+  // TẠO MỚI BÁC SĨ
+  // ========================
+  async create(payload: {
+    fullname: string;
+    gender: string;
+    degree: string;
+    position: string;
+    description?: string;
+    years_of_experience: number;
+    phone_number: string;
+    email: string;
+    avatar_url: string;
+    specialization_id: number;
+  }): Promise<ApiResponse<DoctorDto>> {
+    const res = await authorizedRequest("post", BASE_URL, payload);
+    return res.data;
   },
-  updateDoctor: async (
-    doctorId: string,
-    doctorData: DoctorDto
-  ): Promise<any> => {
-    try {
-      const response = await axiosInstance.put<ApiResponse<DoctorDto>>(
-        `${apiUrl}/${doctorId}`,
-        doctorData
-      );
-      return response.data;
-    } catch (error: any) {
-      throw (
-        error.response?.data || {
-          message: "Không thể cập nhật bác sĩ",
-        }
-      );
-    }
+
+  // ========================
+  // CẬP NHẬT BÁC SĨ
+  // ========================
+  async update(
+    doctorId: number,
+    payload: Partial<{
+      fullname: string;
+      gender: string;
+      degree: string;
+      position: string;
+      description?: string;
+      years_of_experience: number;
+      phone_number: string;
+      email: string;
+      avatar_url: string;
+      specialization_id: number;
+    }>
+  ): Promise<ApiResponse<DoctorDto>> {
+    const res = await authorizedRequest(
+      "put",
+      `${BASE_URL}/${doctorId}`,
+      payload
+    );
+    return res.data;
   },
-  deleteDoctor: async (doctorId: string): Promise<any> => {
-    try {
-      const response = await axiosInstance.delete<ApiResponse<DoctorDto>>(
-        `${apiUrl}/${doctorId}`
-      );
-      return response.data;
-    } catch (error: any) {
-      throw (
-        error.response?.data || {
-          message: "Không thể xóa bác sĩ",
-        }
-      );
-    }
+
+  // ========================
+  // XÓA BÁC SĨ
+  // ========================
+  async delete(doctorId: number): Promise<ApiResponse> {
+    const res = await authorizedRequest("delete", `${BASE_URL}/${doctorId}`);
+    return res.data;
   },
 };

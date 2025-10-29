@@ -9,21 +9,89 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
+import { message } from "antd";
+import { PatientService } from "@/service/patient/patient.service";
 
 const PatientFormModal = ({ patient, onClose, onSave }) => {
   const [formData, setFormData] = useState(
-    patient || {
-      name: "",
-      gender: "Nam",
-      dob: "",
-      phone: "",
-      address: "",
-    }
+    patient
+      ? {
+          fullname: patient.fullname || "",
+          gender: patient.gender === "female" ? "Nữ" : "Nam",
+          date_of_birth: patient.date_of_birth
+            ? formatDateForInput(patient.date_of_birth)
+            : "",
+          phone_number: patient.contact?.phone_number || "",
+          address: patient.address || "",
+        }
+      : {
+          fullname: "",
+          gender: "Nam",
+          date_of_birth: "",
+          phone_number: "",
+          address: "",
+        }
   );
 
-  const handleSubmit = (e) => {
+  const [loading, setLoading] = useState(false);
+
+  // Chuyển định dạng ngày từ dd/mm/yyyy -> yyyy-MM-dd cho input type="date"
+  function formatDateForInput(dateStr) {
+    if (!dateStr) return "";
+    const parts = dateStr.split("/");
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      return `${year}-${month}-${day}`;
+    }
+    return dateStr;
+  }
+
+  // Chuyển định dạng từ yyyy-MM-dd -> dd/mm/yyyy để gửi API
+  function formatDateForApi(value) {
+    if (!value) return "";
+    const [year, month, day] = value.split("-");
+    return `${day}/${month}/${year}`;
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave(formData);
+    setLoading(true);
+
+    try {
+      // Validate đơn giản
+      if (!formData.fullname.trim() || !formData.phone_number.trim()) {
+        message.warning("Vui lòng nhập đầy đủ họ tên và số điện thoại");
+        setLoading(false);
+        return;
+      }
+
+      const payload = {
+        fullname: formData.fullname.trim(),
+        gender: formData.gender === "Nữ" ? "female" : "male",
+        date_of_birth: formatDateForApi(formData.date_of_birth),
+        address: formData.address.trim(),
+        // contact_id tạm thời fix 3, có thể thay bằng dropdown người liên hệ sau này
+        contact_id: 3,
+      };
+
+      if (patient) {
+        // Cập nhật bệnh nhân
+        await PatientService.update(patient.patient_code, payload);
+        message.success("Cập nhật bệnh nhân thành công!");
+      } else {
+        // Thêm mới bệnh nhân
+        await PatientService.create(payload);
+        message.success("Thêm bệnh nhân mới thành công!");
+      }
+
+      onSave?.(); // reload danh sách bên ngoài
+      onClose(); // đóng modal
+    } catch (error) {
+      console.error("Lỗi khi lưu bệnh nhân:", error);
+      message.error("Không thể lưu thông tin bệnh nhân, vui lòng thử lại!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,23 +103,27 @@ const PatientFormModal = ({ patient, onClose, onSave }) => {
       }}
     >
       <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-lg">
-        <h2 className="mb-4 text-xl font-bold">Chỉnh sửa bệnh nhân</h2>
+        <h2 className="mb-4 text-xl font-bold">
+          {patient ? "Chỉnh sửa bệnh nhân" : "Thêm bệnh nhân mới"}
+        </h2>
         <p className="mb-6 text-sm text-gray-600">
-          Cập nhật thông tin bệnh nhân
+          {patient
+            ? "Cập nhật thông tin bệnh nhân"
+            : "Nhập thông tin bệnh nhân mới"}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="name">
+              <Label htmlFor="fullname">
                 Họ tên <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="name"
+                id="fullname"
                 type="text"
-                value={formData.name}
+                value={formData.fullname}
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  setFormData({ ...formData, fullname: e.target.value })
                 }
                 required
               />
@@ -86,9 +158,9 @@ const PatientFormModal = ({ patient, onClose, onSave }) => {
               <Input
                 id="dob"
                 type="date"
-                value={formData.dob}
+                value={formData.date_of_birth}
                 onChange={(e) =>
-                  setFormData({ ...formData, dob: e.target.value })
+                  setFormData({ ...formData, date_of_birth: e.target.value })
                 }
                 required
               />
@@ -101,9 +173,9 @@ const PatientFormModal = ({ patient, onClose, onSave }) => {
               <Input
                 id="phone"
                 type="tel"
-                value={formData.phone}
+                value={formData.phone_number}
                 onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
+                  setFormData({ ...formData, phone_number: e.target.value })
                 }
                 required
               />
@@ -129,15 +201,21 @@ const PatientFormModal = ({ patient, onClose, onSave }) => {
             <button
               type="button"
               onClick={onClose}
+              disabled={loading}
               className="rounded-lg cursor-pointer border border-gray-300 px-4 py-2 hover:bg-gray-50"
             >
               Hủy
             </button>
             <button
               type="submit"
+              disabled={loading}
               className="rounded-lg cursor-pointer bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
             >
-              Cập nhật
+              {loading
+                ? "Đang lưu..."
+                : patient
+                ? "Cập nhật"
+                : "Thêm bệnh nhân"}
             </button>
           </div>
         </form>

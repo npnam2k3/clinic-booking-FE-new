@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Plus, Search, Clock, Pencil, Trash2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Plus, Search, Clock, Pencil, Trash2, RefreshCcw } from "lucide-react";
+import { message, Spin } from "antd";
 import {
   Select,
   SelectContent,
@@ -9,56 +8,96 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import DoctorFormModal from "@/pages/admin/Doctors/components/DoctorFormModal";
 import DoctorSlotsModal from "@/pages/admin/Doctors/components/DoctorSlotModal";
 import { message, Spin } from "antd";
 import { useDoctorService } from "@/service/doctor/useDoctor.service";
 
+import { DoctorService } from "@/service/doctor/useDoctor.service";
+import { SpecialtyService } from "@/service/specialty/specialty.service";
+
 const DoctorsPage = () => {
   const [doctors, setDoctors] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [specialties, setSpecialties] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSlotsModalOpen, setIsSlotsModalOpen] = useState(false);
+
   const [selectedDoctor, setSelectedDoctor] = useState(null);
+
+  const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
   const [messageApi, contextHolder] = message.useMessage();
 
-  // 🧭 Dùng search params để lưu keyword trên URL
-  const [searchParams, setSearchParams] = useSearchParams();
-  const keyword = searchParams.get("keyword") || "";
-  const [searchInput, setSearchInput] = useState(keyword);
-
-  // 🧠 Gọi API lấy danh sách bác sĩ
-  const fetchDoctors = async () => {
+  // ===============================
+  // FETCH DANH SÁCH BÁC SĨ & CHUYÊN KHOA
+  // ===============================
+  const fetchDoctors = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await useDoctorService.getAllDoctors(20, 1, keyword);
-      if (response.status) {
-        const doctorList = response.data?.doctors || response.data || [];
-        setDoctors(doctorList);
-      } else {
-        messageApi.error(response.message || "Không thể tải danh sách bác sĩ");
-      }
-    } catch (error) {
-      messageApi.error(error.message || "Lỗi khi tải danh sách bác sĩ");
+      const data = await DoctorService.getAll();
+      setDoctors(data);
+    } catch (err) {
+      console.error("Lỗi khi tải danh sách bác sĩ:", err);
+      message.error("Không thể tải danh sách bác sĩ!");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // 🧩 Gọi API khi query param "keyword" thay đổi
+  const fetchSpecialties = useCallback(async () => {
+    try {
+      const res = await SpecialtyService.getAll();
+      setSpecialties(res);
+    } catch (err) {
+      console.error("Lỗi khi tải chuyên khoa:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchDoctors();
-  }, [keyword]);
+    fetchSpecialties();
+  }, [fetchDoctors, fetchSpecialties]);
 
+  // ===============================
+  // TÌM KIẾM & LỌC
+  // ===============================
   const handleSearch = () => {
-    // Khi bấm nút → cập nhật URL → trigger useEffect
-    const params = {};
-    if (searchInput.trim()) params.keyword = searchInput.trim();
-    setSearchParams(params);
+    setSearchTerm(searchInput.trim());
   };
 
+  const handleReset = () => {
+    setSearchInput("");
+    setSearchTerm("");
+    setSelectedSpecialty("all");
+    fetchDoctors();
+  };
+
+  const filteredDoctors = useMemo(() => {
+    if (!Array.isArray(doctors)) return [];
+
+    const kw = searchTerm.toLowerCase();
+
+    return doctors.filter((doctor) => {
+      const matchesSearch =
+        doctor.fullname.toLowerCase().includes(kw) ||
+        doctor.email.toLowerCase().includes(kw);
+      const matchesSpecialty =
+        selectedSpecialty === "all" ||
+        doctor.specialty?.specialization_name === selectedSpecialty;
+
+      return matchesSearch && matchesSpecialty;
+    });
+  }, [doctors, searchTerm, selectedSpecialty]);
+
+  // ===============================
+  // HÀNH ĐỘNG
+  // ===============================
   const handleViewSlots = (doctor) => {
     setSelectedDoctor(doctor);
     setIsSlotsModalOpen(true);
@@ -69,19 +108,29 @@ const DoctorsPage = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = (doctorId) => {
+  const handleDelete = async (doctorId) => {
     if (confirm("Bạn có chắc chắn muốn xóa bác sĩ này?")) {
-      setDoctors(doctors.filter((d) => d.doctor_id !== doctorId));
+      try {
+        await DoctorService.delete(doctorId);
+        message.success("Đã xóa bác sĩ thành công!");
+        fetchDoctors();
+      } catch (err) {
+        console.error("Lỗi khi xóa bác sĩ:", err);
+        message.error("Không thể xóa bác sĩ!");
+      }
     }
   };
 
-  const filteredDoctors = doctors.filter((doctor) => {
-    const matchesSpecialty =
-      selectedSpecialty === "all" ||
-      doctor.specialty?.specialization_name === selectedSpecialty;
-    return matchesSpecialty;
-  });
+  const handleSave = async () => {
+    fetchDoctors();
+    setIsAddModalOpen(false);
+    setIsEditModalOpen(false);
+    setSelectedDoctor(null);
+  };
 
+  // ===============================
+  // JSX CHÍNH
+  // ===============================
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {contextHolder}
@@ -92,20 +141,20 @@ const DoctorsPage = () => {
             <h1 className="text-3xl font-bold text-gray-900">Quản lý bác sĩ</h1>
             <p className="text-gray-600">Quản lý danh sách bác sĩ và chuyên khoa</p>
           </div>
-          <button
+          <Button
             onClick={() => setIsAddModalOpen(true)}
-            className="cursor-pointer flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
+            className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white"
           >
             <Plus className="h-5 w-5" />
             Thêm bác sĩ
-          </button>
+          </Button>
         </div>
 
         {/* Filters */}
         <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row">
-            {/* Ô tìm kiếm */}
-            <div className="flex flex-1 items-center gap-2">
+            {/* Tìm kiếm */}
+            <div className="flex-1 flex items-center gap-3">
               <div className="relative flex-1">
                 <Search
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
@@ -113,22 +162,24 @@ const DoctorsPage = () => {
                 />
                 <Input
                   type="text"
-                  placeholder="Tìm kiếm bác sĩ theo tên..."
-                  className="px-10"
+                  placeholder="Tìm kiếm bác sĩ theo tên hoặc email..."
+                  className="pl-10"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
-              <button
-                onClick={handleSearch}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              <Button onClick={handleSearch}>Tìm kiếm</Button>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={handleReset}
               >
-                Tìm kiếm
-              </button>
+                <RefreshCcw className="h-4 w-4" /> Làm mới
+              </Button>
             </div>
 
-            {/* Bộ lọc chuyên khoa */}
+            {/* Chuyên khoa */}
             <div className="w-full md:w-64">
               <Select
                 value={selectedSpecialty}
@@ -139,15 +190,14 @@ const DoctorsPage = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả chuyên khoa</SelectItem>
-                  {[...new Set(
-                    doctors.map((d) => d.specialty?.specialization_name)
-                  )]
-                    .filter(Boolean)
-                    .map((spec) => (
-                      <SelectItem key={spec} value={spec}>
-                        {spec}
-                      </SelectItem>
-                    ))}
+                  {specialties.map((spec) => (
+                    <SelectItem
+                      key={spec.specialization_id}
+                      value={spec.specialization_name}
+                    >
+                      {spec.specialization_name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -155,19 +205,15 @@ const DoctorsPage = () => {
         </div>
 
         {/* Doctors Table */}
-        <div className="rounded-lg bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Spin size="large" />
-              </div>
-            ) : (
+        <Spin spinning={loading}>
+          <div className="rounded-lg bg-white shadow-sm">
+            <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="border-b bg-gray-50">
                   <tr className="text-left text-sm text-gray-600">
                     <th className="p-4 font-medium">Mã BS</th>
                     <th className="p-4 font-medium">Họ tên</th>
-                    <th className="p-4 font-medium">Bằng cấp</th>
+                    <th className="p-4 font-medium">Học vị</th>
                     <th className="p-4 font-medium">Chức danh</th>
                     <th className="p-4 font-medium">Chuyên khoa</th>
                     <th className="p-4 font-medium">Kinh nghiệm</th>
@@ -176,15 +222,22 @@ const DoctorsPage = () => {
                 </thead>
                 <tbody>
                   {filteredDoctors.map((doctor) => (
-                    <tr key={doctor.doctor_id} className="border-b last:border-0">
+                    <tr
+                      key={doctor.doctor_id}
+                      className="border-b last:border-0"
+                    >
                       <td className="p-4 text-sm">{doctor.doctor_id}</td>
-                      <td className="p-4 text-sm font-medium">{doctor.fullname}</td>
+                      <td className="p-4 text-sm font-medium">
+                        {doctor.fullname}
+                      </td>
                       <td className="p-4 text-sm">{doctor.degree}</td>
                       <td className="p-4 text-sm">{doctor.position}</td>
                       <td className="p-4 text-sm">
-                        {doctor.specialty?.specialization_name || "-"}
+                        {doctor.specialty?.specialization_name || "—"}
                       </td>
-                      <td className="p-4 text-sm">{doctor.years_of_experience} năm</td>
+                      <td className="p-4 text-sm">
+                        {doctor.years_of_experience} năm
+                      </td>
                       <td className="p-4 text-sm">
                         <div className="flex items-center gap-3">
                           <button
@@ -214,20 +267,15 @@ const DoctorsPage = () => {
                   ))}
                 </tbody>
               </table>
-            )}
+            </div>
           </div>
-        </div>
-                {/* Add Doctor Modal */}
+        </Spin>
+
+        {/* Add Doctor Modal */}
         {isAddModalOpen && (
           <DoctorFormModal
             onClose={() => setIsAddModalOpen(false)}
-            onSave={(newDoctor) => {
-              setDoctors([
-                ...doctors,
-                { ...newDoctor, id: `DOC${doctors.length + 1}` },
-              ]);
-              setIsAddModalOpen(false);
-            }}
+            onSave={handleSave}
           />
         )}
 
@@ -239,15 +287,7 @@ const DoctorsPage = () => {
               setIsEditModalOpen(false);
               setSelectedDoctor(null);
             }}
-            onSave={(updatedDoctor) => {
-              setDoctors(
-                doctors.map((d) =>
-                  d.id === updatedDoctor.id ? updatedDoctor : d
-                )
-              );
-              setIsEditModalOpen(false);
-              setSelectedDoctor(null);
-            }}
+            onSave={handleSave}
           />
         )}
 
