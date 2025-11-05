@@ -28,7 +28,7 @@ const DoctorPage = () => {
   const initialOrderBy = searchParams.get("orderBy") || "DESC";
   const initialPage = Number(searchParams.get("page")) || 1;
 
-  // STATE
+  // STATE chính
   const [page, setPage] = useState(initialPage);
   const [doctors, setDoctors] = useState([]);
   const [specialties, setSpecialties] = useState([]);
@@ -40,6 +40,12 @@ const DoctorPage = () => {
   const [sortBy, setSortBy] = useState(initialSortBy);
   const [orderBy, setOrderBy] = useState(initialOrderBy);
   const [selectedSpecialty, setSelectedSpecialty] = useState(initialSpecialty);
+
+  // STATE tạm (người dùng thay đổi nhưng chưa bấm "Tìm")
+  const [pendingSortBy, setPendingSortBy] = useState(sortBy);
+  const [pendingOrderBy, setPendingOrderBy] = useState(orderBy);
+  const [pendingSpecialty, setPendingSpecialty] = useState(selectedSpecialty);
+  const [pendingKeyword, setPendingKeyword] = useState(searchTerm);
 
   // ===============================
   // FETCH DANH SÁCH CHUYÊN KHOA
@@ -65,8 +71,7 @@ const DoctorPage = () => {
         sortBy,
         orderBy,
       };
-      if (selectedSpecialty !== "all")
-        params.specialization_id = selectedSpecialty;
+      if (selectedSpecialty !== "all") params.specialtyId = selectedSpecialty;
       if (searchTerm) params.keyword = searchTerm;
 
       const res = await DoctorService.getAll(params);
@@ -75,17 +80,12 @@ const DoctorPage = () => {
         setDoctors(res.doctors);
         setTotalPages(res.totalPages || 1);
         setTotalRecords(res.totalRecords || res.doctors.length);
-      } else if (Array.isArray(res)) {
-        setDoctors(res);
-        setTotalPages(1);
-        setTotalRecords(res.length);
       } else {
         setDoctors([]);
         setTotalPages(1);
         setTotalRecords(0);
       }
 
-      // ✅ Cập nhật URL khi người dùng tìm kiếm / thay đổi bộ lọc
       const query = {
         page: page.toString(),
         sortBy,
@@ -101,7 +101,7 @@ const DoctorPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, sortBy, orderBy, selectedSpecialty, setSearchParams, searchTerm]);
+  }, [page, sortBy, orderBy, selectedSpecialty, searchTerm, setSearchParams]);
 
   // ===============================
   // INIT DATA
@@ -110,22 +110,26 @@ const DoctorPage = () => {
     fetchSpecialties();
   }, [fetchSpecialties]);
 
-  // ✅ Chỉ gọi khi thay đổi page, sort, hoặc chuyên khoa
-  // ❌ Không phụ thuộc vào searchTerm để tránh spam
   useEffect(() => {
     fetchDoctors();
-  }, [page, sortBy, orderBy, selectedSpecialty]);
+  }, [page]); // ✅ chỉ gọi khi chuyển trang
 
   // ===============================
-  // XỬ LÝ NÚT TÌM KIẾM
+  // XỬ LÝ KHI NHẤN NÚT "TÌM"
   // ===============================
   const handleSearch = () => {
     setPage(1);
-    fetchDoctors();
+    // Áp dụng giá trị đang chọn
+    setSortBy(pendingSortBy);
+    setOrderBy(pendingOrderBy);
+    setSelectedSpecialty(pendingSpecialty);
+    setSearchTerm(pendingKeyword);
+    // fetch lại sau khi state cập nhật (delay nhẹ để đảm bảo setState xong)
+    setTimeout(fetchDoctors, 0);
   };
 
   // ===============================
-  // JSX CHÍNH
+  // JSX
   // ===============================
   return (
     <div>
@@ -144,18 +148,18 @@ const DoctorPage = () => {
               type="text"
               placeholder="Tìm kiếm bác sĩ theo tên..."
               className="px-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={pendingKeyword}
+              onChange={(e) => setPendingKeyword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
           </div>
 
           {/* Sắp xếp */}
           <Select
-            value={sortBy}
+            value={pendingSortBy}
             onValueChange={(value) => {
-              setSortBy(value);
-              setOrderBy(value === "fullname" ? "ASC" : "DESC");
+              setPendingSortBy(value);
+              setPendingOrderBy(value === "fullname" ? "ASC" : "DESC");
             }}
           >
             <SelectTrigger className="w-full">
@@ -173,8 +177,8 @@ const DoctorPage = () => {
 
           {/* Lọc theo chuyên khoa */}
           <Select
-            value={selectedSpecialty}
-            onValueChange={(value) => setSelectedSpecialty(value)}
+            value={pendingSpecialty}
+            onValueChange={(value) => setPendingSpecialty(value)}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Chuyên khoa" />

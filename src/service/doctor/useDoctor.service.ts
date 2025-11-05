@@ -12,7 +12,7 @@ export const DoctorService = {
   async getAll(params?: Record<string, any>): Promise<DoctorDto[]> {
     const res = await authorizedRequest("get", BASE_URL, null, { params });
     // API trả về { data: { doctors: [...] } }
-    return res.data?.data?.doctors || [];
+    return res.data?.data;
   },
 
   // ========================

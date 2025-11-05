@@ -17,10 +17,11 @@ export default function DateSelect({ selectedDate, setSelectedDate }) {
   const days = Array.from({ length: 7 }, (_, i) => dayjs().add(i, "day"));
 
   // giá trị mặc định là hôm nay
+  const today = dayjs().format("YYYY-MM-DD");
   // set mặc định là hôm nay khi mount
   useEffect(() => {
     if (!selectedDate) {
-      setSelectedDate(days[0].format("YYYY-MM-DD"));
+      setSelectedDate(today);
     }
   }, [selectedDate, setSelectedDate]);
 
