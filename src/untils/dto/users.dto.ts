@@ -28,3 +28,32 @@ export interface UserRequest {
   phone_number: string;
   address: string;
 }
+
+export interface ContactInfo {
+  phone_number: string;
+  address: string;
+  fullname: string;
+}
+
+export interface RoleInfo {
+  role_id: number;
+  role_name: string;
+}
+
+export interface UserDto {
+  user_id: number;
+  email: string;
+  createdAt: string;
+  contact: ContactInfo;
+  role: RoleInfo;
+}
+
+export interface UsersResponseData {
+  users: UserDto[];
+  totalRecords: number;
+  totalPages: number;
+  conditions: {
+    pageNum: number;
+    limitNum: number;
+  };
+}

@@ -5,23 +5,40 @@ import { useNavigate } from "react-router-dom";
 
 const Specialty = ({ title, numberDoctor, id }) => {
   const navigate = useNavigate();
+
   const handleClick = () => {
-    navigate(`${ROUTE.SPECIALTY_DETAIL}/${id}`);
+    navigate(
+      `${ROUTE.DOCTOR}?page=1&sortBy=years_of_experience&orderBy=DESC&specialization_id=${id}`
+    );
   };
+
   return (
     <div
-      className="px-[20px] py-[20px] max-w-[240px] rounded-[12px] border border-[#ccc] cursor-pointer  transition-all duration-300 
-    hover:shadow-xl/20 hover:-translate-y-1 hover:border-[#ebe7e7]"
       onClick={handleClick}
+      className="
+        flex flex-col justify-between
+        px-5 py-6 w-[260px] h-[200px]
+        rounded-xl border border-gray-300 cursor-pointer 
+        transition-all duration-300
+        hover:shadow-lg hover:-translate-y-1 hover:border-gray-200
+      "
     >
-      <Badge className="bg-gray-200 text-gray-800">
-        <span>{numberDoctor}</span>
-        <span>Bác sĩ</span>
-      </Badge>
-      <h2 className="mt-[12px] text-2xl font-semibold">{title}</h2>
-      <div className="flex items-center gap-x-[12px] mt-[12px] font-semibold">
+      {/* Badge */}
+      <div>
+        <Badge className="bg-gray-100 text-gray-800 px-2 py-1 text-sm font-medium">
+          {numberDoctor} Bác sĩ
+        </Badge>
+
+        {/* Title */}
+        <h2 className="mt-3 text-lg font-semibold leading-snug line-clamp-2">
+          {title}
+        </h2>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 mt-4">
         <span>Xem danh sách bác sĩ</span>
-        <MoveRight size={18} />
+        <MoveRight size={16} />
       </div>
     </div>
   );

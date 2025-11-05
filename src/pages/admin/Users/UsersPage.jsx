@@ -1,49 +1,171 @@
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, RefreshCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
-import { mockUsers } from "@/data/mockData";
 import UserTable from "@/pages/admin/Users/components/UserTable";
 import EditUserModal from "@/pages/admin/Users/components/EditUserModal";
 import AddStaffModal from "@/pages/admin/Users/components/AddStaffModal";
+import { message } from "antd";
+import { useSearchParams } from "react-router-dom";
+import { UserService } from "@/service/user/user.service";
+import { StaffService } from "@/service/staff/staff.service";
 
 const UsersPage = () => {
   const [activeTab, setActiveTab] = useState("staff");
-  const [users, setUsers] = useState(mockUsers);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [staffList, setStaffList] = useState([]);
+  const [userList, setUserList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialKeyword = searchParams.get("keyword") || "";
+  const [searchInput, setSearchInput] = useState(initialKeyword);
+  const [searchTerm, setSearchTerm] = useState(initialKeyword);
+
   const [selectedUser, setSelectedUser] = useState(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
 
-  const filteredUsers = users.filter((u) =>
-    activeTab === "customers"
-      ? u.fullname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.email?.toLowerCase().includes(searchTerm.toLowerCase())
-      : u.role === "staff" || u.role === "admin"
-  );
+  // ===============================
+  // TẢI DANH SÁCH NHÂN VIÊN
+  // ===============================
+  const fetchStaff = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await StaffService.getAll();
+      setStaffList(data);
+    } catch (err) {
+      console.error("Lỗi khi tải danh sách nhân viên:", err);
+      message.error("Không thể tải danh sách nhân viên!");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const handleSaveEdit = (updatedUser) => {
-    setUsers(users.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+  // ===============================
+  // TẢI DANH SÁCH KHÁCH HÀNG
+  // ===============================
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await UserService.getAll();
+      setUserList(data.users);
+    } catch (err) {
+      console.error("Lỗi khi tải danh sách khách hàng:", err);
+      message.error("Không thể tải danh sách khách hàng!");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ===============================
+  // LOAD DỮ LIỆU KHI CHUYỂN TAB
+  // ===============================
+  useEffect(() => {
+    if (activeTab === "staff") {
+      fetchStaff();
+    } else {
+      fetchUsers();
+    }
+  }, [activeTab, fetchStaff, fetchUsers]);
+
+  // ===============================
+  // TÌM KIẾM
+  // ===============================
+  const handleSearch = () => {
+    const keyword = searchInput.trim();
+    setSearchTerm(keyword);
+    if (keyword) setSearchParams({ keyword });
+    else setSearchParams({});
+  };
+
+  // ===============================
+  // LÀM MỚI DANH SÁCH
+  // ===============================
+  const handleReset = () => {
+    setSearchInput("");
+    setSearchTerm("");
+    setSearchParams({});
+    if (activeTab === "staff") fetchStaff();
+    else fetchUsers();
+  };
+
+  // ===============================
+  // LỌC DỮ LIỆU CLIENT-SIDE
+  // ===============================
+  const filteredStaff = staffList.filter((s) => {
+    const kw = searchTerm.toLowerCase();
+    return (
+      s.email.toLowerCase().includes(kw) ||
+      s.contact.fullname.toLowerCase().includes(kw) ||
+      s.contact.phone_number.includes(kw)
+    );
+  });
+
+  const filteredUsers = userList.filter((u) => {
+    const kw = searchTerm.toLowerCase();
+    return (
+      u.email.toLowerCase().includes(kw) ||
+      u.contact.fullname.toLowerCase().includes(kw) ||
+      u.contact.phone_number.includes(kw)
+    );
+  });
+
+  // ===============================
+  // LƯU / THÊM / XÓA
+  // ===============================
+  const handleSaveEdit = async () => {
+    if (activeTab === "staff") fetchStaff();
+    else fetchUsers();
     setIsEditOpen(false);
     setSelectedUser(null);
   };
 
-  const handleAddStaff = (newStaff) => {
-    setUsers([
-      ...users,
-      {
-        ...newStaff,
-        id: `USER${String(users.length + 1).padStart(3, "0")}`,
-        role: "staff",
-        status: "active",
-        createdAt: new Date().toISOString().split("T")[0],
-      },
-    ]);
+  const handleAddStaff = async () => {
+    fetchStaff();
     setIsAddStaffOpen(false);
   };
 
+  const handleDeleteStaff = async (id) => {
+    if (confirm("Bạn có chắc chắn muốn xóa nhân viên này?")) {
+      try {
+        await StaffService.delete(id);
+        message.success("Đã xóa nhân viên thành công!");
+        fetchStaff();
+      } catch (err) {
+        console.error("Lỗi khi xóa nhân viên:", err);
+        message.error("Không thể xóa nhân viên, vui lòng thử lại!");
+      }
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    if (confirm("Bạn có chắc chắn muốn xóa khách hàng này?")) {
+      try {
+        await UserService.delete(id);
+        message.success("Đã xóa khách hàng thành công!");
+        fetchUsers();
+      } catch (err) {
+        console.error("Lỗi khi xóa khách hàng:", err);
+        message.error("Không thể xóa khách hàng, vui lòng thử lại!");
+      }
+    }
+  };
+
+  // ===============================
+  // LOADING STATE
+  // ===============================
+  if (loading) {
+    return (
+      <div className="p-6 text-center text-gray-600">
+        Đang tải dữ liệu người dùng...
+      </div>
+    );
+  }
+
+  // ===============================
+  // JSX CHÍNH
+  // ===============================
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto max-w-7xl">
@@ -57,54 +179,85 @@ const UsersPage = () => {
             <TabsTrigger value="customers">Khách hàng</TabsTrigger>
           </TabsList>
 
-          {/* TAB NHÂN VIÊN */}
+          {/* ======================= TAB NHÂN VIÊN ======================= */}
           <TabsContent value="staff">
-            <div className="flex justify-start mb-4">
-              <Button
-                onClick={() => setIsAddStaffOpen(true)}
-                className={"cursor-pointer"}
-              >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3 w-1/2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    placeholder="Tìm kiếm nhân viên..."
+                    className="pl-10"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  />
+                </div>
+                <Button onClick={handleSearch}>Tìm kiếm</Button>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={handleReset}
+                >
+                  <RefreshCcw className="h-4 w-4" /> Làm mới
+                </Button>
+              </div>
+
+              <Button onClick={() => setIsAddStaffOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" /> Thêm nhân viên
               </Button>
             </div>
 
             <UserTable
-              data={filteredUsers.filter(
-                (u) => u.role === "staff" || u.role === "admin"
-              )}
+              data={filteredStaff}
               onEdit={(user) => {
                 setSelectedUser(user);
                 setIsEditOpen(true);
               }}
-              onDelete={(id) => setUsers(users.filter((u) => u.id !== id))}
+              onDelete={(userId) => handleDeleteStaff(userId)}
+              onReload={fetchStaff} // reload sau khi lock/unlock
+              showLock={true} // chỉ nhân viên mới có khoá/mở khoá
             />
           </TabsContent>
 
-          {/* TAB KHÁCH HÀNG */}
+          {/* ======================= TAB KHÁCH HÀNG ======================= */}
           <TabsContent value="customers">
             <div className="flex items-center justify-between mb-4">
-              <div className="relative w-1/3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <Input
-                  placeholder="Tìm kiếm khách hàng..."
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+              <div className="flex items-center gap-3 w-1/2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    placeholder="Tìm kiếm khách hàng..."
+                    className="pl-10"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  />
+                </div>
+                <Button onClick={handleSearch}>Tìm kiếm</Button>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={handleReset}
+                >
+                  <RefreshCcw className="h-4 w-4" /> Làm mới
+                </Button>
               </div>
             </div>
 
             <UserTable
-              data={filteredUsers.filter((u) => u.role === "user")}
+              data={filteredUsers}
               onEdit={(user) => {
                 setSelectedUser(user);
                 setIsEditOpen(true);
               }}
-              onDelete={(id) => setUsers(users.filter((u) => u.id !== id))}
+              onDelete={(userId) => handleDeleteUser(userId)}
+              showLock={false} // khách hàng KHÔNG có chức năng khóa/mở khóa
             />
           </TabsContent>
         </Tabs>
 
+        {/* ======================= MODAL CHỈNH SỬA ======================= */}
         {isEditOpen && selectedUser && (
           <EditUserModal
             user={selectedUser}
@@ -116,6 +269,7 @@ const UsersPage = () => {
           />
         )}
 
+        {/* ======================= MODAL THÊM NHÂN VIÊN ======================= */}
         {isAddStaffOpen && (
           <AddStaffModal
             onClose={() => setIsAddStaffOpen(false)}
