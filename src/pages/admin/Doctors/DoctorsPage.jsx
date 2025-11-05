@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import DoctorFormModal from "@/pages/admin/Doctors/components/DoctorFormModal";
 import DoctorSlotsModal from "@/pages/admin/Doctors/components/DoctorSlotModal";
+import { message, Spin } from "antd";
+import { useDoctorService } from "@/service/doctor/useDoctor.service";
 
 import { DoctorService } from "@/service/doctor/useDoctor.service";
 import { SpecialtyService } from "@/service/specialty/specialty.service";
@@ -30,6 +32,7 @@ const DoctorsPage = () => {
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
+  const [messageApi, contextHolder] = message.useMessage();
 
   // ===============================
   // FETCH DANH SÁCH BÁC SĨ & CHUYÊN KHOA
@@ -130,14 +133,13 @@ const DoctorsPage = () => {
   // ===============================
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      {contextHolder}
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Quản lý bác sĩ</h1>
-            <p className="text-gray-600">
-              Quản lý danh sách bác sĩ và chuyên khoa
-            </p>
+            <p className="text-gray-600">Quản lý danh sách bác sĩ và chuyên khoa</p>
           </div>
           <Button
             onClick={() => setIsAddModalOpen(true)}
@@ -183,7 +185,7 @@ const DoctorsPage = () => {
                 value={selectedSpecialty}
                 onValueChange={(value) => setSelectedSpecialty(value)}
               >
-                <SelectTrigger className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#33A1E0] focus:ring-1 focus:ring-[#33A1E0]">
+                <SelectTrigger className="w-full rounded-lg border border-gray-300 px-4 py-2">
                   <SelectValue placeholder="Chọn chuyên khoa" />
                 </SelectTrigger>
                 <SelectContent>
