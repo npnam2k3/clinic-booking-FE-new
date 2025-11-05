@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { SuccessDialog } from "@/components/custom/SuccessModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,72 +19,188 @@ import {
   Calendar,
   CircleAlert,
   Clock,
-  Dot,
   MoveLeft,
   User,
 } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
+import clsx from "clsx";
+import { message } from "antd";
+import { AppointmentService } from "@/service/appointment/appointment.service";
 
 const BookingPage = () => {
   const navigate = useNavigate();
-  const handleClickComebackBtn = () => {
-    navigate(-1);
-  };
+  const location = useLocation();
+  const [messageApi, contextHolder] = message.useMessage();   
   const [isOpenSuccessModal, setIsOpenSuccessModal] = useState(false);
-  // call api slot by id
+  const [loading, setLoading] = useState(false);
+
+  // form state
+  const [form, setForm] = useState({
+    full_name: "",
+    date_of_birth: "",
+    gender: "",
+    address: "",
+    note: "",
+    contact_name: "",
+    contact_phone: "",
+  });
+
+  const [errors, setErrors] = useState({});
+
+  const { doctor, selectedDate, selectedSlot } = location.state || {};
+
+  if (!doctor || !selectedSlot) {
+    return (
+      <div className="text-center mt-[80px] text-gray-500">
+        Không tìm thấy thông tin lịch khám.
+        <Button className="mt-4" variant="outline" onClick={() => navigate(-1)}>
+          <MoveLeft size={16} className="mr-1" /> Quay lại
+        </Button>
+      </div>
+    );
+  }
+
+  // cập nhật form
+  const handleChange = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    setErrors((prev) => ({ ...prev, [key]: "" }));
+  };
+
+  // validate form
+  const validateForm = () => {
+    const newErrors = {};
+    if (!form.full_name) newErrors.full_name = "Vui lòng nhập họ và tên";
+    if (!form.date_of_birth) newErrors.date_of_birth = "Vui lòng chọn ngày sinh";
+    if (!form.gender) newErrors.gender = "Vui lòng chọn giới tính";
+    if (!form.address) newErrors.address = "Vui lòng nhập địa chỉ";
+    if (!form.contact_name)
+      newErrors.contact_name = "Vui lòng nhập họ tên người liên hệ";
+    if (!form.contact_phone)
+      newErrors.contact_phone = "Vui lòng nhập số điện thoại";
+    else if (!/^[0-9]{9,11}$/.test(form.contact_phone))
+      newErrors.contact_phone = "Số điện thoại không hợp lệ (9–11 số)";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    try {
+      setLoading(true);
+
+      const payload = {
+        slot_id: Number(selectedSlot.slot_id),
+        fullname_contact: form.contact_name,
+        phone_number: form.contact_phone,
+        fullname: form.full_name,
+        date_of_birth: dayjs(form.date_of_birth).format("DD/MM/YYYY"),
+        gender: form.gender,
+        address: form.address,
+        note: form.note || "",
+      };
+
+      console.log("📤 Sending appointment:", payload);
+
+      const res = await AppointmentService.create(payload);
+      console.log("✅ Appointment created:", res);
+
+      // ✅ Kiểm tra phản hồi backend
+      if (res?.status === true || res?.data) {
+        messageApi.success("Đặt lịch thành công!");
+        setIsOpenSuccessModal(true);
+      } else {
+        // lấy message cụ thể từ backend
+        const backendMsg =
+          res?.message ||
+          res?.detail?.[0]?.message ||
+          "Đặt lịch thất bại! Vui lòng thử lại.";
+        messageApi.error(backendMsg);
+      }
+    } catch (err) {
+      console.error("❌ Lỗi tạo appointment:", err);
+
+      // ✅ Bắt lỗi từ backend trả về
+      const backendMsg =
+        err?.response?.data?.detail?.[0]?.message ||
+        err?.response?.data?.message ||
+        "Không thể tạo lịch khám. Vui lòng thử lại!";
+      messageApi.error(backendMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <div className="px-[30px] mb-[60px]">
+    {contextHolder}
       <Button
         variant="outline"
         className="bg-white text-gray-900 cursor-pointer mt-[32px]"
-        onClick={handleClickComebackBtn}
+        onClick={() => navigate(-1)}
       >
         <MoveLeft />
         <span>Quay lại</span>
       </Button>
 
       <div className="flex gap-x-[40px]">
-        {/* left */}
-        <div className="border border-gray-200 p-[20px] rounded-[12px] mt-[20px] shadow w-[960px] max-w-[960px]">
+        {/* LEFT FORM */}
+        <div className="border border-gray-200 p-[20px] rounded-[12px] mt-[20px] shadow w-[960px]">
           <div className="font-semibold flex items-center gap-x-[12px]">
             <User size={20} />
             <span>Thông tin bệnh nhân</span>
           </div>
 
+          {/* FORM BODY */}
           <div className="mt-[20px]">
-            <h1 className="text-xl font-semibold mb-[20px]">
-              Thông tin cá nhân
-            </h1>
-            <div>
-              <div className="flex items-center gap-x-[2px] mb-[8px]">
-                <Label htmlFor="fullname">Họ và tên</Label>
-                <Asterisk size={12} className="text-red-600" />
-              </div>
+            <h1 className="text-xl font-semibold mb-[20px]">Thông tin cá nhân</h1>
+
+            {/* Họ tên */}
+            <div className="mb-[16px]">
+              <Label>
+                Họ và tên <Asterisk size={10} className="inline text-red-600" />
+              </Label>
               <Input
-                type="text"
-                id="fullname"
-                className="mb-[4px]"
+                value={form.full_name}
                 placeholder="Nhập họ và tên"
+                onChange={(e) => handleChange("full_name", e.target.value)}
+                className={clsx(errors.full_name && "border-red-500")}
               />
+              {errors.full_name && (
+                <p className="text-red-500 text-sm mt-1">{errors.full_name}</p>
+              )}
             </div>
 
-            <div className="flex items-center gap-x-[20px] mt-[20px]">
+            {/* Ngày sinh + giới tính */}
+            <div className="flex gap-x-[20px]">
               <div className="w-[50%]">
-                <div className="flex items-center gap-x-[2px] mb-[8px]">
-                  <Label>Ngày sinh</Label>
-                  <Asterisk size={12} className="text-red-600" />
-                </div>
-                <Input type="date" className="mb-[4px]" />
+                <Label>
+                  Ngày sinh <Asterisk size={10} className="inline text-red-600" />
+                </Label>
+                <Input
+                  type="date"
+                  value={form.date_of_birth}
+                  onChange={(e) => handleChange("date_of_birth", e.target.value)}
+                  className={clsx(errors.date_of_birth && "border-red-500")}
+                />
+                {errors.date_of_birth && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.date_of_birth}
+                  </p>
+                )}
               </div>
 
               <div className="w-[50%]">
-                <div className="flex items-center gap-x-[2px] mb-[8px]">
-                  <Label>Giới tính</Label>
-                  <Asterisk size={12} className="text-red-600" />
-                </div>
-                <Select>
-                  <SelectTrigger className="w-full">
+                <Label>
+                  Giới tính <Asterisk size={10} className="inline text-red-600" />
+                </Label>
+                <Select
+                  value={form.gender}
+                  onValueChange={(val) => handleChange("gender", val)}
+                >
+                  <SelectTrigger
+                    className={clsx(errors.gender && "border-red-500")}
+                  >
                     <SelectValue placeholder="Chọn giới tính" />
                   </SelectTrigger>
                   <SelectContent>
@@ -92,125 +210,142 @@ const BookingPage = () => {
                     </SelectGroup>
                   </SelectContent>
                 </Select>
+                {errors.gender && (
+                  <p className="text-red-500 text-sm mt-1">{errors.gender}</p>
+                )}
               </div>
             </div>
 
+            {/* Địa chỉ */}
             <div className="mt-[20px]">
-              <div className="flex items-center gap-x-[2px] mb-[8px]">
-                <Label>Địa chỉ</Label>
-                <Asterisk size={12} className="text-red-600" />
-              </div>
+              <Label>
+                Địa chỉ <Asterisk size={10} className="inline text-red-600" />
+              </Label>
               <Input
-                type="text"
-                className="mb-[4px]"
                 placeholder="Nhập địa chỉ"
+                value={form.address}
+                onChange={(e) => handleChange("address", e.target.value)}
+                className={clsx(errors.address && "border-red-500")}
+              />
+              {errors.address && (
+                <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+              )}
+            </div>
+
+            {/* Ghi chú */}
+            <div className="mt-[20px]">
+              <Label>Ghi chú thêm</Label>
+              <Textarea
+                rows={4}
+                placeholder="Ghi chú"
+                value={form.note}
+                onChange={(e) => handleChange("note", e.target.value)}
               />
             </div>
-
-            <div className="mt-[20px]">
-              <div className="flex items-center gap-x-[2px] mb-[8px]">
-                <Label>Ghi chú thêm</Label>
-              </div>
-              <Textarea rows={4} className="mb-[4px]" placeholder="Ghi chú" />
-            </div>
           </div>
 
+          {/* Emergency Contact */}
           <div className="mt-[20px]">
-            <h1 className="text-xl font-semibold mb-[20px]">
-              Liên hệ khẩn cấp
-            </h1>
-
-            <div className="flex items-center gap-x-[16px]">
+            <h1 className="text-xl font-semibold mb-[20px]">Liên hệ khẩn cấp</h1>
+            <div className="flex gap-x-[16px]">
               <div className="w-[50%]">
-                <div className="flex items-center gap-x-[2px] mb-[8px]">
-                  <Label htmlFor="contact-name">Họ và tên người liên hệ</Label>
-                  <Asterisk size={12} className="text-red-600" />
-                </div>
+                <Label>
+                  Họ và tên người liên hệ{" "}
+                  <Asterisk size={10} className="inline text-red-600" />
+                </Label>
                 <Input
-                  type="text"
-                  id="contact-name"
-                  className="mb-[4px]"
-                  placeholder="Nhập họ và tên người liên hệ"
+                  placeholder="Nhập họ và tên"
+                  value={form.contact_name}
+                  onChange={(e) => handleChange("contact_name", e.target.value)}
+                  className={clsx(errors.contact_name && "border-red-500")}
                 />
+                {errors.contact_name && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.contact_name}
+                  </p>
+                )}
               </div>
 
               <div className="w-[50%]">
-                <div className="flex items-center gap-x-[2px] mb-[8px]">
-                  <Label htmlFor="contact-phone">
-                    Số điện thoại người liên hệ
-                  </Label>
-                  <Asterisk size={12} className="text-red-600" />
-                </div>
+                <Label>
+                  Số điện thoại{" "}
+                  <Asterisk size={10} className="inline text-red-600" />
+                </Label>
                 <Input
-                  type="text"
-                  id="contact-phone"
-                  className="mb-[4px]"
-                  placeholder="Nhập số điện thoại người liên hệ"
+                  placeholder="Nhập số điện thoại"
+                  value={form.contact_phone}
+                  maxLength={11}
+                  onChange={(e) => handleChange("contact_phone", e.target.value)}
+                  className={clsx(errors.contact_phone && "border-red-500")}
                 />
+                {errors.contact_phone && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.contact_phone}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
+          {/* Submit */}
           <div className="mt-[30px]">
-            <p className="mb-[16px] text-red-600">
-              Điền đúng và đầy đủ thông tin ở các ô có (*) trước khi nhấn nút
-              xác nhận
+            <p className="mb-[16px] text-red-600 text-sm">
+              Điền đầy đủ các ô có dấu (*) trước khi xác nhận
             </p>
             <button
-              className="bg-gray-800 text-white cursor-pointer w-full flex items-center justify-center gap-x-[12px] py-[12px] rounded-[12px] hover:bg-gray-600 transition duration-200"
-              onClick={() => setIsOpenSuccessModal(true)}
+              onClick={handleSubmit}
+              disabled={loading}
+              className={`w-full flex items-center justify-center gap-x-[12px] py-[12px] rounded-[12px] 
+                ${
+                  loading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-gray-800 hover:bg-gray-600 text-white"
+                }`}
             >
               <Calendar size={18} />
-              <span>Xác nhận đặt lịch</span>
+              <span>{loading ? "Đang xử lý..." : "Xác nhận đặt lịch"}</span>
             </button>
           </div>
         </div>
 
-        {/* right */}
-        <div className="mt-[20px] w-[480px] max-w-[480px]">
-          {/* info doctor */}
+        {/* RIGHT INFO */}
+        <div className="mt-[20px] w-[480px]">
+          {/* Doctor Info */}
           <div className="border border-gray-200 p-[20px] rounded-[12px] shadow">
-            <h1 className="text-xl font-semibold mb-[28px]">
-              Thông tin bác sĩ
-            </h1>
+            <h1 className="text-xl font-semibold mb-[20px]">Thông tin bác sĩ</h1>
             <div className="flex gap-x-[24px]">
               <img
-                src="https://v0-online-appointment-booking-three.vercel.app/female-doctor.jpg"
+                src={
+                  doctor.avatar_url ||
+                  "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                }
                 alt=""
-                className="w-[80px] h-auto object-cover rounded-[8px]"
+                className="w-[80px] h-[80px] object-cover rounded-[8px]"
               />
               <div>
-                <h2 className="font-semibold">BS.CKI Nguyễn Văn An</h2>
-                <p className="text-gray-500 mb-[4px]">Bác sĩ Chuyên khoa I</p>
-                <Badge className="bg-gray-200 text-gray-800">Tim Mạch</Badge>
+                <h2 className="font-semibold">{doctor.fullname}</h2>
+                <p className="text-gray-500 mb-[4px]">{doctor.position}</p>
+                <Badge className="bg-gray-200 text-gray-800">
+                  {doctor.specialty?.specialization_name}
+                </Badge>
               </div>
             </div>
           </div>
 
-          {/* slot detail */}
+          {/* Slot Info */}
           <div className="border border-gray-200 p-[20px] rounded-[12px] shadow mt-[24px]">
-            <h1 className="text-xl font-semibold mb-[28px]">
-              Chi tiết lịch khám
-            </h1>
+            <h1 className="text-xl font-semibold mb-[20px]">Chi tiết lịch khám</h1>
             <div className="flex justify-between">
-              <div className="flex items-center gap-x-[8px] text-gray-500">
-                <Calendar size={18} />
-                <p>Ngày khám</p>
-              </div>
-              <p className="font-semibold">Thứ 2 ngày 23/09/2024</p>
+              <p className="text-gray-600">Ngày khám</p>
+              <p className="font-semibold">
+                {dayjs(selectedDate).format("DD/MM/YYYY")}
+              </p>
             </div>
-
             <div className="flex justify-between mt-[20px]">
-              <div className="flex items-center gap-x-[8px] text-gray-500">
-                <Clock size={18} />
-                <p>Giờ khám</p>
-              </div>
-              <p className="font-semibold">08:00-09:00</p>
-            </div>
-
-            <div className="flex justify-between mt-[20px]">
-              <p className="text-gray-500">Thời gian</p>
-              <p className="font-semibold">60 phút</p>
+              <p className="text-gray-600">Giờ khám</p>
+              <p className="font-semibold">
+                {selectedSlot.start_at} - {selectedSlot.end_at}
+              </p>
             </div>
           </div>
 
@@ -220,25 +355,15 @@ const BookingPage = () => {
               <CircleAlert size={18} />
               <h2>Lưu ý quan trọng</h2>
             </div>
-            <div>
-              <p className="flex items-center">
-                <Dot />
-                <span>Vui lòng có mặt trước 15 phút so với giờ hẹn</span>
-              </p>
-              <p className="flex items-center">
-                <Dot />
-                <span>Mang theo CMND/CCCD và các giấy tờ y tế liên quan</span>
-              </p>
-              <p className="flex items-center">
-                <Dot />
-                <span>Liên hệ hotline 1900 1234 nếu cần hỗ trợ</span>
-              </p>
-            </div>
+            <ul className="list-disc ml-[20px] text-gray-600 space-y-1">
+              <li>Vui lòng có mặt trước 15 phút so với giờ hẹn.</li>
+              <li>Mang theo CMND/CCCD và giấy tờ y tế liên quan.</li>
+              <li>Liên hệ hotline 1900 1234 nếu cần hỗ trợ.</li>
+            </ul>
           </div>
         </div>
       </div>
 
-      {/* success modal */}
       <SuccessDialog
         open={isOpenSuccessModal}
         onOpenChange={setIsOpenSuccessModal}

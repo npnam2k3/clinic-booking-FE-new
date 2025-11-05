@@ -49,7 +49,7 @@ export const router = createBrowserRouter([
         element: <DoctorDetail />,
       },
       {
-        path: `${ROUTE.BOOKING}/:id`,
+        path: `${ROUTE.BOOKING}`,
         element: <BookingPage />,
       },
       {

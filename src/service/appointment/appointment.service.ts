@@ -14,6 +14,11 @@ export const AppointmentService = {
     // Một số backend trả về { status, data: [...] }
     return res.data?.data || res.data || [];
   },
+  async getAllHistory(): Promise<AppointmentResponseData> {
+    const res = await authorizedRequest("get", `${BASE_URL}/history`);
+    // Một số backend trả về { status, data: [...] }
+    return res.data?.data || res.data || [];
+  },
 
   // Lấy chi tiết lịch khám theo id
   async getById(appointmentId: number): Promise<AppointmentDto> {
@@ -49,7 +54,7 @@ export const AppointmentService = {
     return res.data;
   },
 
-  // Hủy lịch khám
+  // Hủy lịch khám bởi bệnh nhân
   async cancel(
     appointmentId: number,
     payload: {
@@ -59,7 +64,7 @@ export const AppointmentService = {
   ): Promise<ApiResponse<AppointmentDto>> {
     const res = await authorizedRequest(
       "patch",
-      `${BASE_URL}/${appointmentId}/cancel`,
+      `${BASE_URL}/client/cancel/${appointmentId}`,
       payload
     );
     return res.data;

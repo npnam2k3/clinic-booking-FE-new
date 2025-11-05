@@ -12,9 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import DoctorFormModal from "@/pages/admin/Doctors/components/DoctorFormModal";
 import DoctorSlotsModal from "@/pages/admin/Doctors/components/DoctorSlotModal";
-import { message, Spin } from "antd";
-import { useDoctorService } from "@/service/doctor/useDoctor.service";
-
 import { DoctorService } from "@/service/doctor/useDoctor.service";
 import { SpecialtyService } from "@/service/specialty/specialty.service";
 
