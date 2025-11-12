@@ -1,7 +1,7 @@
 import Banner from "@/pages/client/Home/components/Banner";
 import GuideBooking from "@/pages/client/Home/components/GuideBooking";
 import Info from "@/pages/client/Home/components/Info";
-import Specialty from "@/pages/client/Home/components/Specialty";
+import SpecialtyPreview from "@/pages/client/Home/components/SpecialtyPreview";
 
 const HomePage = () => {
   return (
@@ -13,7 +13,7 @@ const HomePage = () => {
       <Info />
 
       {/* specialties */}
-      <Specialty />
+      <SpecialtyPreview />
 
       {/* guide booking */}
       <GuideBooking />

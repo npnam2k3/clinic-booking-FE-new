@@ -129,34 +129,40 @@ const AppointmentsPage = () => {
   // ===============================
   // HỦY CUỘC HẸN
   // ===============================
-  const handleCancel = (apt) => {
-    setSelectedAppointment(apt);
-    setIsCancelModalOpen(true);
-  };
+  // ===============================
+// HỦY CUỘC HẸN
+// ===============================
+const handleCancel = (apt) => {
+  setSelectedAppointment(apt);
+  setIsCancelModalOpen(true);
+};
 
-  const handleConfirmCancel = async (cancelReason) => {
-    try {
-      setLoading(true);
-      const res = await AppointmentService.cancel(
-        selectedAppointment.appointment_id,
-        cancelReason
-      );
+const handleConfirmCancel = async ({ cancelBy, cancelReason, note }) => {
+  try {
+    setLoading(true);
 
-      if (res.status) {
-        message.success("Đã hủy lịch khám thành công!");
-        fetchAppointments();
-      } else {
-        message.error(res.message || "Không thể hủy lịch khám!");
-      }
-    } catch (err) {
-      console.error("Lỗi khi hủy lịch:", err);
-      message.error("Không thể hủy lịch khám!");
-    } finally {
-      setLoading(false);
-      setIsCancelModalOpen(false);
-      setSelectedAppointment(null);
+    const res = await AppointmentService.cancel(selectedAppointment.appointment_id, {
+      cancellation_party: cancelBy,
+      reason_code: cancelReason,
+      note: note || "",
+    });
+
+    if (res.status) {
+      message.success("Đã hủy lịch khám thành công!");
+      fetchAppointments(); // reload danh sách
+    } else {
+      message.error(res.message || "Không thể hủy lịch khám!");
     }
-  };
+  } catch (err) {
+    console.error("Lỗi khi hủy lịch:", err);
+    message.error("Không thể hủy lịch khám!");
+  } finally {
+    setLoading(false);
+    setIsCancelModalOpen(false);
+    setSelectedAppointment(null);
+  }
+};
+
 
   // ===============================
   // JSX CHÍNH

@@ -57,13 +57,6 @@ const PatientsTable = ({ patients, handleEdit, handleDelete, handleView }) => {
                   <td className="p-4 text-sm">
                     <div className="flex items-center gap-3">
                       <button
-                        className="rounded cursor-pointer p-1 hover:bg-gray-100"
-                        title="Xem chi tiết"
-                        onClick={() => handleView(patient)}
-                      >
-                        <Eye className="h-4 w-4 text-gray-600" />
-                      </button>
-                      <button
                         onClick={() => handleEdit(patient)}
                         className="rounded cursor-pointer p-1 hover:bg-gray-100"
                         title="Chỉnh sửa"
