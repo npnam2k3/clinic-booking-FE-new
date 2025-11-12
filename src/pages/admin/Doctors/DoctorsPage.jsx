@@ -38,7 +38,7 @@ const DoctorsPage = () => {
     try {
       setLoading(true);
       const data = await DoctorService.getAll();
-      setDoctors(data);
+      setDoctors(data?.doctors || []);
     } catch (err) {
       console.error("Lỗi khi tải danh sách bác sĩ:", err);
       message.error("Không thể tải danh sách bác sĩ!");

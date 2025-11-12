@@ -120,13 +120,6 @@ const PatientsPage = () => {
               Quản lý thông tin bệnh nhân và lịch sử khám
             </p>
           </div>
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-white hover:bg-orange-700 cursor-pointer"
-          >
-            <Plus className="h-5 w-5" />
-            Thêm bệnh nhân
-          </button>
         </div>
 
         {/* Search */}
