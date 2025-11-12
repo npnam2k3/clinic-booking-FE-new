@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Asterisk, Info } from "lucide-react";
-import { mockDoctors } from "@/data/mockData";
+import { message, Spin } from "antd";
+import { DoctorService } from "@/service/doctor/useDoctor.service";
+import { DoctorSlotsService } from "@/service/doctor_slot/useDoctorSlot.service";
+import { validateDoctorSlotsRequest } from "@/untils/vaildate/doctor-slots.validate";
 
 const GenerateSlotsModal = ({ onClose }) => {
   const [formData, setFormData] = useState({
@@ -18,6 +21,68 @@ const GenerateSlotsModal = ({ onClose }) => {
     dateFrom: "",
     dateTo: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [doctors, setDoctors] = useState([]);
+
+  // 🩺 Gọi API lấy danh sách bác sĩ
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const res = await DoctorService.getAll();
+        setDoctors(res?.doctors || res || []);
+      } catch (err) {
+        console.error("Lỗi khi tải danh sách bác sĩ:", err);
+        message.error("Không thể tải danh sách bác sĩ!");
+      }
+    };
+    fetchDoctors();
+  }, []);
+
+  // 🔹 Hàm format ngày sang dd/MM/yyyy
+  const formatDate = (val) => {
+    if (!val) return "";
+    const d = new Date(val);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  // ✅ Gửi request tạo slots
+  const handleGenerateSlots = async () => {
+    const payload = {
+      doctor_id: Number(formData.doctorId),
+      from_date: formatDate(formData.dateFrom),
+      to_date: formatDate(formData.dateTo),
+    };
+
+    // 🧩 Kiểm tra dữ liệu đầu vào
+    const error = validateDoctorSlotsRequest(payload);
+    if (error) {
+      message.error(error);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await DoctorSlotsService.getDoctorSlots(payload);
+
+      if (res.status === false || res.statusCode >= 400) {
+        message.error(res.message || "Không thể tạo slots!");
+        return;
+      }
+
+      message.success(res.message || "Tạo slot khám thành công!");
+      console.log("Kết quả tạo slots:", res.data);
+      onClose();
+    } catch (err) {
+      console.error("Lỗi khi tạo slots:", err);
+      const backendMsg = err?.response?.data?.message;
+      message.error(backendMsg || "Không thể tạo slot khám!");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -74,11 +139,20 @@ const GenerateSlotsModal = ({ onClose }) => {
                 <SelectValue placeholder="Chọn bác sĩ" />
               </SelectTrigger>
               <SelectContent>
-                {mockDoctors.map((doctor) => (
-                  <SelectItem key={doctor.id} value={doctor.id}>
-                    {doctor.name}
-                  </SelectItem>
-                ))}
+                {doctors.length > 0 ? (
+                  doctors.map((doctor) => (
+                    <SelectItem
+                      key={doctor.doctor_id}
+                      value={String(doctor.doctor_id)}
+                    >
+                      {doctor.fullname}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-gray-500 text-sm">
+                    (Đang tải danh sách bác sĩ...)
+                  </div>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -128,13 +202,11 @@ const GenerateSlotsModal = ({ onClose }) => {
             </Button>
             <Button
               type="button"
-              onClick={() => {
-                alert("Đã tạo slots thành công!");
-                onClose();
-              }}
+              disabled={loading}
+              onClick={handleGenerateSlots}
               className="bg-orange-600 hover:bg-orange-700 px-5 py-2 text-white cursor-pointer"
             >
-              Tạo slot khám
+              {loading ? "Đang tạo..." : "Tạo slot khám"}
             </Button>
           </div>
         </form>

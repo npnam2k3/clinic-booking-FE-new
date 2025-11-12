@@ -7,7 +7,6 @@ const PatientsTable = ({ patients, handleEdit, handleDelete, handleView }) => {
         <table className="w-full">
           <thead className="border-b bg-gray-50">
             <tr className="text-left text-sm text-gray-600">
-              <th className="p-4 font-medium">Mã BN</th>
               <th className="p-4 font-medium">Họ tên</th>
               <th className="p-4 font-medium">Giới tính</th>
               <th className="p-4 font-medium">Ngày sinh</th>
@@ -34,7 +33,6 @@ const PatientsTable = ({ patients, handleEdit, handleDelete, handleView }) => {
             ) : (
               patients.map((patient) => (
                 <tr key={patient.id} className="border-b last:border-0">
-                  <td className="p-4 text-sm">{patient.patient_code}</td>
                   <td className="p-4 text-sm font-medium">
                     {patient.fullname}
                   </td>

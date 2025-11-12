@@ -48,13 +48,15 @@ const SchedulesTable = ({ filteredSchedules = [], activeTab = "new" }) => {
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px]">
+          <table className="w-full min-w-[800px]">
             <thead className="border-b bg-gray-50">
               <tr className="text-left text-sm text-gray-600">
                 <th className="p-4 font-medium">Mã lịch</th>
                 <th className="p-4 font-medium">Bác sĩ</th>
-                <th className="p-4 font-medium">Thời lượng slot</th>
+                <th className="p-4 font-medium">Ngày làm việc</th>
+                <th className="p-4 font-medium">Khung giờ</th>
                 <th className="p-4 font-medium">Hiệu lực</th>
+                <th className="p-4 font-medium">Slot (phút)</th>
                 <th className="p-4 font-medium">Trạng thái</th>
                 <th className="p-4 font-medium">Thao tác</th>
               </tr>
@@ -71,26 +73,30 @@ const SchedulesTable = ({ filteredSchedules = [], activeTab = "new" }) => {
                     {schedule.doctorName}
                   </td>
 
+                  <td className="p-4 text-sm">{schedule.dayOfWeek}</td>
+
                   <td className="p-4 text-sm">
-                    {schedule.slotDuration ?? "-"} phút
+                    {schedule.startTime} - {schedule.endTime}
                   </td>
 
                   <td className="p-4 text-sm">
-                    {formatDate(schedule.effectiveFrom)}
-                    {schedule.effectiveTo
-                      ? ` → ${formatDate(schedule.effectiveTo)}`
-                      : ""}
+                    {formatDate(schedule.effectiveDate)} →{" "}
+                    {formatDate(schedule.expireDate)}
+                  </td>
+
+                  <td className="p-4 text-sm text-center">
+                    {schedule.slotDuration ?? "-"}
                   </td>
 
                   <td className="p-4 text-sm">
                     <span
                       className={`inline-block rounded px-2 py-1 text-xs font-medium ${
-                        schedule.status === "active"
+                        schedule.status === "Đang hoạt động"
                           ? "bg-emerald-100 text-emerald-900"
                           : "bg-gray-100 text-gray-900"
                       }`}
                     >
-                      {schedule.status === "active" ? "Hiệu lực" : "Hết hạn"}
+                      {schedule.status}
                     </span>
                   </td>
 
@@ -113,7 +119,7 @@ const SchedulesTable = ({ filteredSchedules = [], activeTab = "new" }) => {
         </div>
       )}
 
-      {/* Detail modal */}
+      {/* Modal xem chi tiết */}
       {detailOpen && selectedSchedule && (
         <ScheduleDetailsModal
           schedule={selectedSchedule}
@@ -128,11 +134,9 @@ export default SchedulesTable;
 
 export function formatDate(value) {
   if (!value) return "-";
-  // accept "YYYY-MM-DD" or ISO string
   const d = new Date(value);
   if (!isNaN(d.getTime())) {
     return d.toLocaleDateString("vi-VN");
   }
-  // fallback: return original
   return value;
 }
