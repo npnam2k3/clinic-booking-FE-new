@@ -10,12 +10,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Asterisk, Info } from "lucide-react";
-import { message, Spin } from "antd";
+import { message } from "antd";
 import { DoctorService } from "@/service/doctor/useDoctor.service";
 import { DoctorSlotsService } from "@/service/doctor_slot/useDoctorSlot.service";
+import { WorkScheduleService } from "@/service/work_shedule/work_shedule.service";
 import { validateDoctorSlotsRequest } from "@/untils/vaildate/doctor-slots.validate";
 
-const GenerateSlotsModal = ({ onClose }) => {
+const GenerateSlotsModal = ({ onClose, activeTab }) => {
   const [formData, setFormData] = useState({
     doctorId: "",
     dateFrom: "",
@@ -23,8 +24,9 @@ const GenerateSlotsModal = ({ onClose }) => {
   });
   const [loading, setLoading] = useState(false);
   const [doctors, setDoctors] = useState([]);
+  const [scheduleInfo, setScheduleInfo] = useState(null); // ✅ lưu thông tin lịch làm việc
 
-  // 🩺 Gọi API lấy danh sách bác sĩ
+  // 🩺 Lấy danh sách bác sĩ
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
@@ -38,13 +40,81 @@ const GenerateSlotsModal = ({ onClose }) => {
     fetchDoctors();
   }, []);
 
-  // 🔹 Hàm format ngày sang dd/MM/yyyy
+  // 🔹 Format ngày sang dd/MM/yyyy (gửi lên backend)
   const formatDate = (val) => {
     if (!val) return "";
     const d = new Date(val);
     const day = String(d.getDate()).padStart(2, "0");
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  // ✅ Khi chọn bác sĩ → tự lấy ngày hiệu lực
+  const handleSelectDoctor = async (doctorId) => {
+    setFormData({ ...formData, doctorId, dateFrom: "", dateTo: "" });
+    setScheduleInfo(null);
+
+    if (!doctorId) return;
+
+    try {
+      setLoading(true);
+      const res =
+        activeTab === "new"
+          ? await WorkScheduleService.getNewWorkSchedules()
+          : await WorkScheduleService.getOldWorkSchedules();
+
+      const doctorSchedule = res.data.find(
+        (d) => String(d.doctor_id) === String(doctorId)
+      );
+
+      if (doctorSchedule && doctorSchedule.work_schedules?.length > 0) {
+        const firstSchedule = doctorSchedule.work_schedules[0];
+        const effectiveDate = firstSchedule.effective_date;
+        const expireDate = firstSchedule.expire_date;
+
+        setFormData({
+          doctorId,
+          dateFrom: convertToInputDate(effectiveDate),
+          dateTo: convertToInputDate(expireDate),
+        });
+
+        setScheduleInfo({
+          effectiveDate,
+          expireDate,
+        });
+      } else {
+        // ⚠️ Không có lịch
+        const msg =
+          activeTab === "new"
+            ? "Bác sĩ này chưa có lịch mới!"
+            : "Bác sĩ này chưa có lịch hiện tại!";
+        message.warning(msg);
+      }
+    } catch (err) {
+      console.error("Lỗi khi tải lịch bác sĩ:", err);
+      message.error("Không thể tải lịch làm việc của bác sĩ!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Chuyển ngày sang định dạng yyyy-MM-dd để hiển thị trong input
+  const convertToInputDate = (val) => {
+    if (!val) return "";
+    if (val.includes("/")) {
+      const [day, month, year] = val.split("/");
+      return `${year}-${month}-${day}`;
+    }
+    // Dạng yyyy-MM-dd thì giữ nguyên
+    return val;
+  };
+
+  // ✅ Chuyển ngày yyyy-MM-dd sang dd/MM/yyyy để hiển thị người đọc
+  const convertDisplayDate = (val) => {
+    if (!val) return "-";
+    if (val.includes("/")) return val;
+    const [year, month, day] = val.split("-");
     return `${day}/${month}/${year}`;
   };
 
@@ -56,7 +126,6 @@ const GenerateSlotsModal = ({ onClose }) => {
       to_date: formatDate(formData.dateTo),
     };
 
-    // 🧩 Kiểm tra dữ liệu đầu vào
     const error = validateDoctorSlotsRequest(payload);
     if (error) {
       message.error(error);
@@ -100,26 +169,35 @@ const GenerateSlotsModal = ({ onClose }) => {
           Tạo các ca khám từ lịch làm việc đã cấu hình sẵn.
         </p>
 
-        {/* Cảnh báo */}
-        <div className="mb-6 rounded-lg bg-yellow-50 p-4">
-          <div className="flex items-start gap-3">
-            <div className="rounded-full bg-yellow-100 p-2">
-              <Info className="h-5 w-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-yellow-900">Lưu ý:</p>
-              <p className="text-sm text-yellow-700">
-                Đang sử dụng lịch làm việc mới (Hiệu lực từ 2025-01-01 đến
-                2025-12-31)
-              </p>
-              <ul className="mt-2 list-inside list-disc text-sm text-yellow-700">
-                <li>Hệ thống sẽ tạo slot dựa trên lịch đã cấu hình.</li>
-                <li>Các slot trùng lặp sẽ không được tạo lại.</li>
-                <li>Slot sẽ được tạo theo thời lượng đã cấu hình.</li>
-              </ul>
+        {/* ⚠️ Thông tin lịch làm việc */}
+        {scheduleInfo ? (
+          <div className="mb-6 rounded-lg bg-yellow-50 p-4">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-yellow-100 p-2">
+                <Info className="h-5 w-5 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-yellow-900">Lưu ý:</p>
+                <p className="text-sm text-yellow-700">
+                  Đang sử dụng{" "}
+                  {activeTab === "new" ? "lịch mới" : "lịch hiện tại"} ( Hiệu
+                  lực từ {convertDisplayDate(scheduleInfo.effectiveDate)} đến{" "}
+                  {convertDisplayDate(scheduleInfo.expireDate)})
+                </p>
+                <ul className="mt-2 list-inside list-disc text-sm text-yellow-700">
+                  <li>Hệ thống sẽ tạo slot dựa trên lịch đã cấu hình.</li>
+                  <li>Các slot trùng lặp sẽ không được tạo lại.</li>
+                  <li>Slot sẽ được tạo theo thời lượng đã cấu hình.</li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-4 text-red-700 text-sm">
+            ⚠️ Chưa chọn bác sĩ hoặc bác sĩ này chưa có lịch{" "}
+            {activeTab === "new" ? "mới" : "hiện tại"}.
+          </div>
+        )}
 
         {/* Form */}
         <form className="space-y-5">
@@ -131,9 +209,7 @@ const GenerateSlotsModal = ({ onClose }) => {
             </div>
             <Select
               value={formData.doctorId}
-              onValueChange={(val) =>
-                setFormData({ ...formData, doctorId: val })
-              }
+              onValueChange={(val) => handleSelectDoctor(val)}
             >
               <SelectTrigger className="w-full h-[42px]">
                 <SelectValue placeholder="Chọn bác sĩ" />

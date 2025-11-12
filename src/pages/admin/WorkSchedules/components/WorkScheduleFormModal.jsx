@@ -86,7 +86,9 @@ const WorkScheduleFormModal = ({ schedule, onClose, onSave }) => {
     e.preventDefault();
 
     if (!formData.doctorId) {
-      messageApi.error("Vui lòng chọn bác sĩ và thêm ít nhất một ngày làm việc!");
+      messageApi.error(
+        "Vui lòng chọn bác sĩ và thêm ít nhất một ngày làm việc!"
+      );
       return;
     }
 

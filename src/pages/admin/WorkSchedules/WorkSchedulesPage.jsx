@@ -28,58 +28,54 @@ const WorkSchedulesPage = () => {
     setSearchTerm(search);
   }, [location.search]);
 
-  // ✅ Gọi API mỗi khi đổi tab hoặc ấn tìm kiếm
-  useEffect(() => {
-    const fetchSchedules = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        let res;
-        if (activeTab === "new") {
-          res = await WorkScheduleService.getNewWorkSchedules();
-          console.log("Lịch mới:", res);
-        } else {
-          res = await WorkScheduleService.getOldWorkSchedules();
-          console.log("Lịch cũ:", res);
-        }
-
-        // Map dữ liệu API về dạng table-friendly
-        let formatted = res.data.flatMap((doctor) =>
-          doctor.work_schedules.map((ws) => ({
-            id: ws.schedule_id,
-            doctorId: doctor.doctor_id,
-            doctorName: doctor.fullname,
-            dayOfWeek: ws.day_of_week,
-            startTime: ws.start_time,
-            endTime: ws.end_time,
-            note: ws.note,
-            status: ws.status,
-            effectiveDate: ws.effective_date,
-            expireDate: ws.expire_date,
-            slotDuration: ws.slot_duration,
-            type: activeTab,
-          }))
-        );
-
-        // 🔍 Nếu có từ khóa tìm kiếm, lọc theo tên bác sĩ
-        if (searchTerm) {
-          const term = searchTerm.toLowerCase();
-          formatted = formatted.filter((s) =>
-            s.doctorName.toLowerCase().includes(term)
-          );
-        }
-
-        setSchedules(formatted);
-      } catch (err) {
-        console.error("Lỗi khi tải lịch làm việc:", err);
-        setError("Không thể tải dữ liệu. Vui lòng thử lại.");
-      } finally {
-        setLoading(false);
+  // ✅ Đưa hàm fetchSchedules ra ngoài useEffect để tái sử dụng
+  const fetchSchedules = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      let res;
+      if (activeTab === "new") {
+        res = await WorkScheduleService.getNewWorkSchedules();
+      } else {
+        res = await WorkScheduleService.getOldWorkSchedules();
       }
-    };
 
+      let formatted = res.data.map((doctor, index) => ({
+        id: `SCH${String(index + 1).padStart(3, "0")}`,
+        doctorId: doctor.doctor_id,
+        doctorName: doctor.fullname,
+        slotDuration: doctor.work_schedules[0]?.slot_duration ?? "-",
+        effectiveDate: doctor.work_schedules[0]?.effective_date ?? "-",
+        expireDate: doctor.work_schedules[0]?.expire_date ?? "-",
+        status: "Hiệu lực",
+        workDays: doctor.work_schedules.map((ws) => ({
+          dayOfWeek: ws.day_of_week,
+          startTime: ws.start_time,
+          endTime: ws.end_time,
+          note: ws.note,
+        })),
+      }));
+
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        formatted = formatted.filter((s) =>
+          s.doctorName.toLowerCase().includes(term)
+        );
+      }
+
+      setSchedules(formatted);
+    } catch (err) {
+      console.error("Lỗi khi tải lịch làm việc:", err);
+      setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🧭 Gọi API mỗi khi đổi tab hoặc bấm tìm kiếm
+  useEffect(() => {
     fetchSchedules();
-  }, [activeTab, searchTerm]); // chỉ gọi lại khi đổi tab hoặc bấm tìm kiếm
+  }, [activeTab, searchTerm]);
 
   // ✅ Xử lý bấm nút tìm kiếm
   const handleSearch = () => {
@@ -108,7 +104,8 @@ const WorkSchedulesPage = () => {
               className="flex cursor-pointer items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
             >
               <Zap className="h-5 w-5" />
-              Chia slot khám {activeTab === "new" ? `(lịch mới)` : `(lịch cũ)`}
+              Chia slot khám{" "}
+              {activeTab === "new" ? `(lịch mới)` : `(lịch hiện tại)`}
             </button>
             <button
               onClick={() => setIsAddModalOpen(true)}
@@ -168,28 +165,21 @@ const WorkSchedulesPage = () => {
 
         {/* Loading / Error / Table */}
         {loading ? (
-          <p className="text-center text-gray-500 mt-10">
-            Đang tải dữ liệu...
-          </p>
+          <p className="text-center text-gray-500 mt-10">Đang tải dữ liệu...</p>
         ) : error ? (
           <p className="text-center text-red-500 mt-10">{error}</p>
         ) : (
-          <SchedulesTable
-            filteredSchedules={schedules}
-            activeTab={activeTab}
-          />
+          <SchedulesTable filteredSchedules={schedules} activeTab={activeTab} />
         )}
 
         {/* Add Modal */}
         {isAddModalOpen && (
           <WorkScheduleFormModal
             onClose={() => setIsAddModalOpen(false)}
-            onSave={(newSchedule) => {
-              setSchedules([
-                ...schedules,
-                { ...newSchedule, id: `SCH${schedules.length + 1}` },
-              ]);
+            onSave={() => {
               setIsAddModalOpen(false);
+              // 🔄 Gọi lại danh sách sau khi thêm mới
+              fetchSchedules();
             }}
           />
         )}
@@ -198,6 +188,7 @@ const WorkSchedulesPage = () => {
         {isSlotGenerateModalOpen && (
           <GenerateSlotsModal
             onClose={() => setIsSlotGenerateModalOpen(false)}
+            activeTab={activeTab}
           />
         )}
       </div>

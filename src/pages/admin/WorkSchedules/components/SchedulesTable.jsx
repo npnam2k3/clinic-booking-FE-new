@@ -1,5 +1,4 @@
 import { Eye } from "lucide-react";
-import { ScheduleDetailsModal } from "@/pages/admin/WorkSchedules/components/ScheduleDetailModal";
 import { useState } from "react";
 
 const SchedulesTable = ({ filteredSchedules = [], activeTab = "new" }) => {
@@ -19,32 +18,10 @@ const SchedulesTable = ({ filteredSchedules = [], activeTab = "new" }) => {
   return (
     <div className="rounded-lg bg-white shadow-sm">
       {filteredSchedules.length === 0 ? (
-        <div className="p-8 text-center">
-          <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-            <svg
-              className="h-6 w-6 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {activeTab === "new"
-              ? "Chưa có lịch làm việc mới"
-              : "Chưa có lịch làm việc cũ"}
-          </h3>
-          <p className="text-gray-500 mb-4">
-            {activeTab === "new"
-              ? "Hãy thêm lịch làm việc mới để bắt đầu quản lý"
-              : "Không có dữ liệu lịch làm việc cũ trong hệ thống"}
-          </p>
+        <div className="p-8 text-center text-gray-500">
+          {activeTab === "new"
+            ? "Chưa có lịch làm việc mới"
+            : "Chưa có lịch làm việc hiện tại"}
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -53,10 +30,8 @@ const SchedulesTable = ({ filteredSchedules = [], activeTab = "new" }) => {
               <tr className="text-left text-sm text-gray-600">
                 <th className="p-4 font-medium">Mã lịch</th>
                 <th className="p-4 font-medium">Bác sĩ</th>
-                <th className="p-4 font-medium">Ngày làm việc</th>
-                <th className="p-4 font-medium">Khung giờ</th>
+                <th className="p-4 font-medium">Thời lượng slot</th>
                 <th className="p-4 font-medium">Hiệu lực</th>
-                <th className="p-4 font-medium">Slot (phút)</th>
                 <th className="p-4 font-medium">Trạng thái</th>
                 <th className="p-4 font-medium">Thao tác</th>
               </tr>
@@ -68,49 +43,46 @@ const SchedulesTable = ({ filteredSchedules = [], activeTab = "new" }) => {
                   className="border-b last:border-0 hover:bg-gray-50"
                 >
                   <td className="p-4 text-sm">{schedule.id}</td>
-
                   <td className="p-4 text-sm font-medium whitespace-pre-wrap">
-                    {schedule.doctorName}
+                    BS. {schedule.doctorName}
                   </td>
-
-                  <td className="p-4 text-sm">{schedule.dayOfWeek}</td>
-
-                  <td className="p-4 text-sm">
-                    {schedule.startTime} - {schedule.endTime}
-                  </td>
-
-                  <td className="p-4 text-sm">
-                    {formatDate(schedule.effectiveDate)} →{" "}
-                    {formatDate(schedule.expireDate)}
-                  </td>
-
                   <td className="p-4 text-sm text-center">
-                    {schedule.slotDuration ?? "-"}
+                    {schedule.slotDuration && schedule.slotDuration !== "-"
+                      ? `${schedule.slotDuration} phút`
+                      : "Chưa thiết lập"}
                   </td>
-
                   <td className="p-4 text-sm">
-                    <span
-                      className={`inline-block rounded px-2 py-1 text-xs font-medium ${
-                        schedule.status === "Đang hoạt động"
-                          ? "bg-emerald-100 text-emerald-900"
-                          : "bg-gray-100 text-gray-900"
-                      }`}
-                    >
+                    {schedule.effectiveDate &&
+                    schedule.expireDate &&
+                    schedule.effectiveDate !== "-" &&
+                    schedule.expireDate !== "-" &&
+                    schedule.effectiveDate !== null &&
+                    schedule.expireDate !== null &&
+                    schedule.effectiveDate !== "" &&
+                    schedule.expireDate !== "" ? (
+                      <>
+                        {formatDate(schedule.effectiveDate)} →{" "}
+                        {formatDate(schedule.expireDate)}
+                      </>
+                    ) : (
+                      <span className="italic text-gray-400">
+                        Chưa thiết lập hiệu lực
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-4 text-sm">
+                    <span className="inline-block rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-900">
                       {schedule.status}
                     </span>
                   </td>
-
                   <td className="p-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => openDetail(schedule)}
-                        className="rounded p-2 hover:bg-gray-100 cursor-pointer"
-                        title="Xem chi tiết"
-                        aria-label={`Xem chi tiết lịch ${schedule.id}`}
-                      >
-                        <Eye className="h-5 w-5 text-gray-600" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => openDetail(schedule)}
+                      className="rounded p-2 hover:bg-gray-100 cursor-pointer"
+                      title="Xem chi tiết"
+                    >
+                      <Eye className="h-5 w-5 text-gray-600" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -121,10 +93,55 @@ const SchedulesTable = ({ filteredSchedules = [], activeTab = "new" }) => {
 
       {/* Modal xem chi tiết */}
       {detailOpen && selectedSchedule && (
-        <ScheduleDetailsModal
-          schedule={selectedSchedule}
-          onClose={closeDetail}
-        />
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6">
+            <h2 className="text-xl font-semibold mb-2">
+              Chi tiết lịch — {selectedSchedule.id}
+            </h2>
+            <p className="text-gray-700 mb-1">
+              <strong>Bác sĩ:</strong> BS. {selectedSchedule.doctorName}
+            </p>
+            <p className="text-gray-700 mb-1">
+              <strong>Thời lượng slot:</strong> {selectedSchedule.slotDuration}{" "}
+              phút
+            </p>
+            <p className="text-gray-700 mb-4">
+              <strong>Hiệu lực:</strong>{" "}
+              {formatDate(selectedSchedule.effectiveDate)} →{" "}
+              {formatDate(selectedSchedule.expireDate)}
+            </p>
+
+            <table className="w-full border text-sm mb-4">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="border p-2">Thứ</th>
+                  <th className="border p-2">Giờ làm</th>
+                  <th className="border p-2">Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedSchedule.workDays.map((d, idx) => (
+                  <tr key={idx}>
+                    <td className="border p-2">{d.dayOfWeek}</td>
+                    <td className="border p-2">
+                      {d.startTime} - {d.endTime}
+                    </td>
+                    <td className="border p-2">{d.note || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="text-right">
+              <button
+                onClick={closeDetail}
+                className="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

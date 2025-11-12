@@ -1,22 +1,64 @@
+import { useEffect, useState } from "react";
 import { Calendar, XCircle, Users, UserRound } from "lucide-react";
-import { mockDashboardStats } from "@/data/mockData";
 import {
   BarChart,
   Bar,
-  PieChart,
-  Pie,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
+import { message } from "antd";
+import { DashboardService } from "@/service/dashboard/dashboard.service";
+import {
+  validateBasicStatisticResponse,
+  validateWeeklyAppointmentResponse,
+  validateUpcomingAppointmentsResponse,
+} from "@/untils/vaildate/dashboard.validate";
 
 const DashboardPage = () => {
-  const stats = mockDashboardStats;
+  const [basicStats, setBasicStats] = useState(null);
+  const [weeklyStats, setWeeklyStats] = useState([]);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  // 🧭 Gọi API khi load trang
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        // 1️⃣ Basic Statistic
+        const basicRes = await DashboardService.getBasicStatistic();
+        const basicErr = validateBasicStatisticResponse(basicRes);
+        if (basicErr) return message.error(basicErr);
+        setBasicStats(basicRes.data);
+
+        // 2️⃣ Weekly Appointment Statistic
+        const weeklyRes =
+          await DashboardService.getWeeklyAppointmentStatistic();
+        const weeklyErr = validateWeeklyAppointmentResponse(weeklyRes);
+        if (weeklyErr) return message.error(weeklyErr);
+        setWeeklyStats(weeklyRes.data.weeklyAppointments);
+
+        // 3️⃣ Upcoming Appointments
+        const upcomingRes = await DashboardService.getUpcomingAppointments();
+        const upcomingErr = validateUpcomingAppointmentsResponse(upcomingRes);
+        if (upcomingErr) return message.error(upcomingErr);
+        setUpcomingAppointments(upcomingRes.data);
+      } catch (err) {
+        console.error("❌ Lỗi khi tải dashboard:", err);
+        message.error("Không thể tải dữ liệu Dashboard!");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // 🟢 Màu trạng thái
   const getStatusColor = (status) => {
     switch (status) {
       case "confirmed":
@@ -26,22 +68,43 @@ const DashboardPage = () => {
       case "completed":
         return "bg-blue-500";
       case "cancelled":
-        return "bg-gray-800";
+        return "bg-gray-700";
       default:
-        return "bg-gray-500";
+        return "bg-gray-400";
     }
   };
 
+  // 🟢 Text trạng thái
   const getStatusText = (status) => {
     switch (status) {
       case "confirmed":
-        return "Confirmed";
+        return "Đã xác nhận";
       case "pending":
-        return "Pending";
+        return "Chờ xác nhận";
+      case "completed":
+        return "Hoàn thành";
+      case "cancelled":
+        return "Đã hủy";
       default:
         return status;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Đang tải dữ liệu Dashboard...
+      </div>
+    );
+  }
+
+  if (!basicStats) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500">
+        Không thể tải dữ liệu Dashboard!
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -52,9 +115,8 @@ const DashboardPage = () => {
           <p className="text-gray-600">Tổng quan hoạt động hệ thống</p>
         </div>
 
-        {/* Stats Cards */}
+        {/* 📊 Stats Cards */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* Today Appointments */}
           <div className="rounded-lg bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-medium text-gray-600">
@@ -63,24 +125,22 @@ const DashboardPage = () => {
               <Calendar className="h-5 w-5 text-gray-400" />
             </div>
             <div className="text-3xl font-bold text-gray-900">
-              {stats.todayAppointments}
+              {basicStats.appointments_today}
             </div>
             <p className="mt-1 text-xs text-gray-500">Pending & Confirmed</p>
           </div>
 
-          {/* Cancelled Today */}
           <div className="rounded-lg bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-medium text-gray-600">Lịch bị hủy</h3>
               <XCircle className="h-5 w-5 text-gray-400" />
             </div>
             <div className="text-3xl font-bold text-gray-900">
-              {stats.cancelledToday}
+              {basicStats.appointments_cancelled}
             </div>
             <p className="mt-1 text-xs text-gray-500">Tháng này</p>
           </div>
 
-          {/* Active Doctors */}
           <div className="rounded-lg bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-medium text-gray-600">
@@ -89,32 +149,31 @@ const DashboardPage = () => {
               <Users className="h-5 w-5 text-gray-400" />
             </div>
             <div className="text-3xl font-bold text-gray-900">
-              {stats.activeDoctors}
+              {basicStats.total_doctors}
             </div>
             <p className="mt-1 text-xs text-gray-500">Đang làm việc</p>
           </div>
 
-          {/* Total Patients */}
           <div className="rounded-lg bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-medium text-gray-600">Bệnh nhân</h3>
               <UserRound className="h-5 w-5 text-gray-400" />
             </div>
             <div className="text-3xl font-bold text-gray-900">
-              {stats.totalPatients}
+              {basicStats.total_patients}
             </div>
             <p className="mt-1 text-xs text-gray-500">Tổng số</p>
           </div>
         </div>
 
+        {/* 📈 Weekly Appointments Chart */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Weekly Appointments Chart */}
           <div className="rounded-lg bg-white p-6 shadow-sm">
             <h3 className="mb-6 text-lg font-semibold">
               Lịch khám 7 ngày gần nhất
             </h3>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={stats.weeklyAppointments}>
+              <BarChart data={weeklyStats}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
                   dataKey="day"
@@ -144,99 +203,17 @@ const DashboardPage = () => {
             </ResponsiveContainer>
           </div>
 
-          {/* Appointments by Status */}
-          {/* <div className="rounded-lg bg-white p-6 shadow-sm">
-            <h3 className="mb-6 text-lg font-semibold">Trạng thái lịch khám</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={[
-                    {
-                      name: "Cancelled",
-                      value: stats.appointmentsByStatus.cancelled,
-                      color: "#374151",
-                    },
-                    {
-                      name: "Completed",
-                      value: stats.appointmentsByStatus.completed,
-                      color: "#3b82f6",
-                    },
-                    {
-                      name: "Confirmed",
-                      value: stats.appointmentsByStatus.confirmed,
-                      color: "#111827",
-                    },
-                    {
-                      name: "Pending",
-                      value: stats.appointmentsByStatus.pending,
-                      color: "#f97316",
-                    },
-                  ]}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="value"
-                  animationDuration={1000}
-                  animationBegin={0}
-                >
-                  {[
-                    {
-                      name: "Cancelled",
-                      value: stats.appointmentsByStatus.cancelled,
-                      color: "#374151",
-                    },
-                    {
-                      name: "Completed",
-                      value: stats.appointmentsByStatus.completed,
-                      color: "#3b82f6",
-                    },
-                    {
-                      name: "Confirmed",
-                      value: stats.appointmentsByStatus.confirmed,
-                      color: "#111827",
-                    },
-                    {
-                      name: "Pending",
-                      value: stats.appointmentsByStatus.pending,
-                      color: "#f97316",
-                    },
-                  ].map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#fff",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                    padding: "8px 12px",
-                  }}
-                />
-                <Legend
-                  verticalAlign="bottom"
-                  height={36}
-                  iconType="circle"
-                  formatter={(value, entry) => (
-                    <span style={{ color: "#374151", fontSize: "14px" }}>
-                      {value}
-                    </span>
-                  )}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div> */}
+          {/* 👉 Bạn có thể thêm biểu đồ khác ở đây */}
         </div>
 
-        {/* Recent Appointments Table */}
+        {/* 📅 Upcoming Appointments Table */}
         <div className="mt-6 rounded-lg bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-lg font-semibold">Lịch khám sắp tới</h3>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b text-left text-sm text-gray-600">
-                  <th className="pb-3 font-medium">Mã lịch</th>
+                  <th className="pb-3 font-medium">#</th>
                   <th className="pb-3 font-medium">Bệnh nhân</th>
                   <th className="pb-3 font-medium">Bác sĩ</th>
                   <th className="pb-3 font-medium">Ngày</th>
@@ -245,24 +222,35 @@ const DashboardPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {stats.recentAppointments.map((apt) => (
-                  <tr key={apt.id} className="border-b last:border-0">
-                    <td className="py-3 text-sm">{apt.id}</td>
-                    <td className="py-3 text-sm">{apt.patientName}</td>
-                    <td className="py-3 text-sm">{apt.doctorName}</td>
-                    <td className="py-3 text-sm">{apt.date}</td>
-                    <td className="py-3 text-sm">{apt.time}</td>
-                    <td className="py-3 text-sm">
-                      <span
-                        className={`inline-block rounded px-2 py-1 text-xs font-medium text-white ${getStatusColor(
-                          apt.status
-                        )}`}
-                      >
-                        {getStatusText(apt.status)}
-                      </span>
+                {upcomingAppointments.length > 0 ? (
+                  upcomingAppointments.map((apt) => (
+                    <tr key={apt.index} className="border-b last:border-0">
+                      <td className="py-3 text-sm">{apt.index}</td>
+                      <td className="py-3 text-sm">{apt.patient_name}</td>
+                      <td className="py-3 text-sm">{apt.doctor_name}</td>
+                      <td className="py-3 text-sm">{apt.slot_date}</td>
+                      <td className="py-3 text-sm">{apt.start_at}</td>
+                      <td className="py-3 text-sm">
+                        <span
+                          className={`inline-block rounded px-2 py-1 text-xs font-medium text-white ${getStatusColor(
+                            apt.status
+                          )}`}
+                        >
+                          {getStatusText(apt.status)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="py-4 text-center text-gray-500 text-sm"
+                    >
+                      Không có lịch hẹn sắp tới.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
