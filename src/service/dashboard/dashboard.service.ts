@@ -2,6 +2,7 @@
 
 import {
   BasicStatisticResponseDto,
+  UpcomingAppointmentsResponseDto,
   WeeklyAppointmentStatisticResponseDto,
 } from "@/untils/dto/dashboard.dto";
 import { authorizedRequest } from "../authorized-request";
@@ -26,5 +27,17 @@ export const DashboardService = {
       "/dashboard/weekly-appointment-statistic"
     );
     return res.data as WeeklyAppointmentStatisticResponseDto;
+  },
+
+  /**
+   * 🔹 Lấy danh sách lịch hẹn sắp tới
+   * Endpoint: GET /dashboard/upcoming-appointments
+   */
+  async getUpcomingAppointments(): Promise<UpcomingAppointmentsResponseDto> {
+    const res = await authorizedRequest(
+      "get",
+      "/dashboard/upcoming-appointments"
+    );
+    return res.data as UpcomingAppointmentsResponseDto;
   },
 };
