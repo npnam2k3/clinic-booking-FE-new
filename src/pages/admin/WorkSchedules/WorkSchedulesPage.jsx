@@ -99,14 +99,15 @@ const WorkSchedulesPage = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => setIsSlotGenerateModalOpen(true)}
-              className="flex cursor-pointer items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
-            >
-              <Zap className="h-5 w-5" />
-              Chia slot khám{" "}
-              {activeTab === "new" ? `(lịch mới)` : `(lịch hiện tại)`}
-            </button>
+            {activeTab === "new" && (
+              <button
+                onClick={() => setIsSlotGenerateModalOpen(true)}
+                className="flex cursor-pointer items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
+              >
+                <Zap className="h-5 w-5" />
+                Chia slot khám (lịch mới)
+              </button>
+            )}
             <button
               onClick={() => setIsAddModalOpen(true)}
               className="flex cursor-pointer items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
