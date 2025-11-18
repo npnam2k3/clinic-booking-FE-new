@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import DateSelect, { capitalizeFirstLetter } from "@/components/custom/DateSelect";
+import DateSelect, {
+  capitalizeFirstLetter,
+} from "@/components/custom/DateSelect";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,9 +27,12 @@ const DoctorDetail = () => {
   const [loading, setLoading] = useState(true);
   const [doctor, setDoctor] = useState(null);
 
-  const [selectedDate, setSelectedDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [selectedDate, setSelectedDate] = useState(
+    dayjs().format("YYYY-MM-DD")
+  );
 
   const [selectedSlot, setSelectedSlot] = useState(null);
+  const [messageApi, contextHolder] = message.useMessage();
 
   // ===============================
   // FETCH API CHI TIẾT BÁC SĨ
@@ -41,13 +46,13 @@ const DoctorDetail = () => {
         const data = res?.data?.data || res?.data || res;
         console.log("Doctor fetched:", data);
         if (!data) {
-          message.error("Không tìm thấy thông tin bác sĩ!");
+          messageApi.error("Không tìm thấy thông tin bác sĩ!");
           return;
         }
         setDoctor(data);
       } catch (err) {
         console.error("Lỗi khi tải chi tiết bác sĩ:", err);
-        message.error("Không thể tải thông tin chi tiết!");
+        messageApi.error("Không thể tải thông tin chi tiết!");
       } finally {
         setLoading(false);
       }
@@ -63,17 +68,19 @@ const DoctorDetail = () => {
     if (!doctor?.work_schedules) return [];
     const weekday = dayjs(selectedDate).locale("en").format("dddd");
     console.log("weekday selected:", weekday);
-    console.log("work_schedules day_of_week:", doctor.work_schedules.map(s => s.day_of_week));
+    console.log(
+      "work_schedules day_of_week:",
+      doctor.work_schedules.map((s) => s.day_of_week)
+    );
 
     const matchedSchedules = doctor.work_schedules.filter(
       (s) => s.day_of_week?.trim().toLowerCase() === weekday.toLowerCase()
     );
 
-
     // Lấy các slot có cùng slot_date (trùng ngày chọn) và còn "available"
     const allSlots = matchedSchedules.flatMap((s) => s.slots || []);
     const selectedDateStr = dayjs(selectedDate).format("YYYY-MM-DD");
-   const availableSlots = allSlots.filter(
+    const availableSlots = allSlots.filter(
       (slot) =>
         dayjs(slot.slot_date).isSame(dayjs(selectedDate), "day") &&
         slot.status === "available"
@@ -140,6 +147,7 @@ const DoctorDetail = () => {
   // ===============================
   return (
     <div className="px-[30px] mb-[60px]">
+      {contextHolder}
       <Button
         variant="outline"
         className="bg-white text-gray-900 cursor-pointer mt-[32px]"
@@ -205,34 +213,36 @@ const DoctorDetail = () => {
 
                 {doctor.work_schedules && doctor.work_schedules.length > 0 ? (
                   <div className="space-y-3">
-                    {[...new Set(doctor.work_schedules.map((s) => s.day_of_week))].map(
-                      (day) => {
-                        const schedulesForDay = doctor.work_schedules.filter(
-                          (s) => s.day_of_week === day
-                        );
-                        return (
-                          <div
-                            key={day}
-                            className="border rounded-lg p-3 bg-gray-50"
-                          >
-                            <h4 className="font-semibold text-gray-800 mb-2">
-                              {dayMap[day] || day}
-                            </h4>
-                            <ul className="text-sm text-gray-600 list-disc ml-5 space-y-1">
-                              {schedulesForDay.map((s) => (
-                                <li key={s.schedule_id}>
-                                  {s.start_time.slice(0, 5)} -{" "}
-                                  {s.end_time.slice(0, 5)}{" "}
-                                  <span className="text-gray-500">
-                                    ({s.note})
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        );
-                      }
-                    )}
+                    {[
+                      ...new Set(
+                        doctor.work_schedules.map((s) => s.day_of_week)
+                      ),
+                    ].map((day) => {
+                      const schedulesForDay = doctor.work_schedules.filter(
+                        (s) => s.day_of_week === day
+                      );
+                      return (
+                        <div
+                          key={day}
+                          className="border rounded-lg p-3 bg-gray-50"
+                        >
+                          <h4 className="font-semibold text-gray-800 mb-2">
+                            {dayMap[day] || day}
+                          </h4>
+                          <ul className="text-sm text-gray-600 list-disc ml-5 space-y-1">
+                            {schedulesForDay.map((s) => (
+                              <li key={s.schedule_id}>
+                                {s.start_time.slice(0, 5)} -{" "}
+                                {s.end_time.slice(0, 5)}{" "}
+                                <span className="text-gray-500">
+                                  ({s.note})
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-gray-500">Chưa có lịch làm việc.</p>
@@ -298,17 +308,21 @@ const DoctorDetail = () => {
                   }}
                 >
                   {slots.length > 0 ? (
-                    slots.slice(0, 50).map((slot) => (
-                      <Slot
-                        key={slot.start_at}
-                        start={slot.start_at}
-                        end={slot.end_at}
-                        isSelected={selectedSlot?.start_at === slot.start_at}
-                        onClick={() => setSelectedSlot(slot)}
-                      />
-                    ))
+                    slots
+                      .slice(0, 50)
+                      .map((slot) => (
+                        <Slot
+                          key={slot.start_at}
+                          start={slot.start_at}
+                          end={slot.end_at}
+                          isSelected={selectedSlot?.start_at === slot.start_at}
+                          onClick={() => setSelectedSlot(slot)}
+                        />
+                      ))
                   ) : (
-                    <p className="text-gray-500">Không có ca khám trong ngày.</p>
+                    <p className="text-gray-500">
+                      Không có ca khám trong ngày.
+                    </p>
                   )}
                 </div>
                 {selectedSlot && (
@@ -319,7 +333,9 @@ const DoctorDetail = () => {
                         dayjs(selectedDate).format("dddd")
                       )} - Ngày ${dayjs(selectedDate).format(
                         "DD/MM/YYYY"
-                      )} - Ca khám: ${selectedSlot.start_at}-${selectedSlot.end_at}`}
+                      )} - Ca khám: ${selectedSlot.start_at}-${
+                        selectedSlot.end_at
+                      }`}
                     </p>
                   </div>
                 )}
@@ -332,22 +348,22 @@ const DoctorDetail = () => {
                         ? "bg-gray-900 text-white cursor-pointer"
                         : "bg-gray-300 text-black cursor-not-allowed"
                     }`}
-                   onClick={() => {
-                    if (selectedSlot) {
-                      navigate(`${ROUTE.BOOKING}`, {
-                        state: {
-                          doctor,
-                          selectedDate,
-                          selectedSlot: {
-                            slot_id: selectedSlot.slot_id, // 🔹 Đúng theo API backend
-                            start_at: selectedSlot.start_at,
-                            end_at: selectedSlot.end_at,
-                            slot_date: selectedSlot.slot_date,
+                    onClick={() => {
+                      if (selectedSlot) {
+                        navigate(`${ROUTE.BOOKING}`, {
+                          state: {
+                            doctor,
+                            selectedDate,
+                            selectedSlot: {
+                              slot_id: selectedSlot.slot_id, // 🔹 Đúng theo API backend
+                              start_at: selectedSlot.start_at,
+                              end_at: selectedSlot.end_at,
+                              slot_date: selectedSlot.slot_date,
+                            },
                           },
-                        },
-                      });
-                    }
-                  }}
+                        });
+                      }
+                    }}
                   >
                     <Calendar size={18} />
                     <span>Đặt lịch khám</span>
@@ -382,5 +398,4 @@ const DoctorDetail = () => {
     </div>
   );
 };
-
 export default DoctorDetail;

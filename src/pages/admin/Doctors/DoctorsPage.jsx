@@ -19,6 +19,7 @@ const DoctorsPage = () => {
   const [doctors, setDoctors] = useState([]);
   const [specialties, setSpecialties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [messageApi, contextHolder] = message.useMessage();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -29,7 +30,6 @@ const DoctorsPage = () => {
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
-  const [messageApi, contextHolder] = message.useMessage();
 
   // ===============================
   // FETCH DANH SÁCH BÁC SĨ & CHUYÊN KHOA
@@ -41,7 +41,7 @@ const DoctorsPage = () => {
       setDoctors(data?.doctors || []);
     } catch (err) {
       console.error("Lỗi khi tải danh sách bác sĩ:", err);
-      message.error("Không thể tải danh sách bác sĩ!");
+      messageApi.error("Tải danh sách bác sĩ thất bại!");
     } finally {
       setLoading(false);
     }
@@ -109,11 +109,11 @@ const DoctorsPage = () => {
     if (confirm("Bạn có chắc chắn muốn xóa bác sĩ này?")) {
       try {
         await DoctorService.delete(doctorId);
-        message.success("Đã xóa bác sĩ thành công!");
+        messageApi.success("Xóa bác sĩ thành công!");
         fetchDoctors();
       } catch (err) {
         console.error("Lỗi khi xóa bác sĩ:", err);
-        message.error("Không thể xóa bác sĩ!");
+        messageApi.error("Xóa bác sĩ thất bại. Vui lòng thử lại!");
       }
     }
   };
@@ -136,7 +136,9 @@ const DoctorsPage = () => {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Quản lý bác sĩ</h1>
-            <p className="text-gray-600">Quản lý danh sách bác sĩ và chuyên khoa</p>
+            <p className="text-gray-600">
+              Quản lý danh sách bác sĩ và chuyên khoa
+            </p>
           </div>
           <Button
             onClick={() => setIsAddModalOpen(true)}

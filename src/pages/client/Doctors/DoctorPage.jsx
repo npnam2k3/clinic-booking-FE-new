@@ -46,6 +46,7 @@ const DoctorPage = () => {
   const [pendingOrderBy, setPendingOrderBy] = useState(orderBy);
   const [pendingSpecialty, setPendingSpecialty] = useState(selectedSpecialty);
   const [pendingKeyword, setPendingKeyword] = useState(searchTerm);
+  const [messageApi, contextHolder] = message.useMessage();
 
   // ===============================
   // FETCH DANH SÁCH CHUYÊN KHOA
@@ -97,7 +98,7 @@ const DoctorPage = () => {
       setSearchParams(query);
     } catch (err) {
       console.error("Lỗi khi tải danh sách bác sĩ:", err);
-      message.error("Không thể tải danh sách bác sĩ!");
+      messageApi.error("Không thể tải danh sách bác sĩ!");
     } finally {
       setLoading(false);
     }
@@ -133,11 +134,12 @@ const DoctorPage = () => {
   // ===============================
   return (
     <div>
+      {contextHolder}
       <Banner />
 
       <div className="max-w-[1250px] mx-auto">
         {/* Bộ lọc & tìm kiếm */}
-        <div className="outline outline-gray-200 my-[40px] p-[20px] rounded-[8px] grid grid-cols-[3fr_2fr_2fr_1fr_2fr] gap-x-[16px]">
+        <div className="outline outline-gray-200 my-[40px] p-[20px] rounded-[8px] grid grid-cols-[3fr_2fr_1fr_2fr] gap-x-[16px]">
           {/* Ô tìm kiếm */}
           <div className="relative flex items-center">
             <Search
@@ -153,27 +155,6 @@ const DoctorPage = () => {
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
           </div>
-
-          {/* Sắp xếp */}
-          <Select
-            value={pendingSortBy}
-            onValueChange={(value) => {
-              setPendingSortBy(value);
-              setPendingOrderBy(value === "fullname" ? "ASC" : "DESC");
-            }}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Sắp xếp" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="fullname">Theo tên (A-Z)</SelectItem>
-                <SelectItem value="years_of_experience">
-                  Theo kinh nghiệm
-                </SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
 
           {/* Lọc theo chuyên khoa */}
           <Select

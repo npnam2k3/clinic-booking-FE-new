@@ -42,9 +42,9 @@ const WorkScheduleFormModal = ({ schedule, onClose, onSave }) => {
       try {
         const res = await DoctorService.getAll();
         setDoctors(res.doctors);
-      } catch (error) {
-        console.error("Lỗi khi tải danh sách bác sĩ:", error);
-        message.error("Không thể tải danh sách bác sĩ!");
+      } catch (err) {
+        console.error("Lỗi khi tải danh sách bác sĩ:", err);
+        messageApi.error("Tải danh sách bác sĩ thất bại!");
       }
     };
     fetchDoctors();

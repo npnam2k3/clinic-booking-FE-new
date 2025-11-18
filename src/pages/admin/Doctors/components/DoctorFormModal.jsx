@@ -34,6 +34,7 @@ const DoctorFormModal = ({ doctor, onClose, onSave }) => {
   const [specialties, setSpecialties] = useState([]);
   const [loading, setLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(formData.avatar_url);
+  const [messageApi, contextHolder] = message.useMessage();
 
   // ===============================
   // FETCH CHUYÊN KHOA
@@ -45,7 +46,7 @@ const DoctorFormModal = ({ doctor, onClose, onSave }) => {
       setSpecialties(data);
     } catch (err) {
       console.error("Lỗi khi tải danh sách chuyên khoa:", err);
-      message.error("Không thể tải danh sách chuyên khoa!");
+      messageApi.error("Tải danh sách chuyên khoa thất bại!");
     } finally {
       setLoading(false);
     }
@@ -80,16 +81,16 @@ const DoctorFormModal = ({ doctor, onClose, onSave }) => {
 
       if (isEdit) {
         await DoctorService.update(doctor.doctor_id, formData);
-        message.success("Cập nhật thông tin bác sĩ thành công!");
+        messageApi.success("Cập nhật thông tin bác sĩ thành công!");
       } else {
         await DoctorService.create(formData);
-        message.success("Thêm bác sĩ mới thành công!");
+        messageApi.success("Thêm mới bác sĩ thành công!");
       }
 
       onSave();
     } catch (err) {
       console.error("Lỗi khi lưu thông tin bác sĩ:", err);
-      message.error("Không thể lưu thông tin bác sĩ!");
+      messageApi.error("Lưu thông tin bác sĩ thất bại. Vui lòng thử lại!");
     } finally {
       setLoading(false);
     }
@@ -106,6 +107,7 @@ const DoctorFormModal = ({ doctor, onClose, onSave }) => {
           "color-mix(in oklab, var(--color-black) 50%, transparent)",
       }}
     >
+      {contextHolder}
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6">
         <h2 className="mb-4 text-xl font-bold">
           {isEdit ? "Chỉnh sửa bác sĩ" : "Thêm bác sĩ mới"}
@@ -186,7 +188,11 @@ const DoctorFormModal = ({ doctor, onClose, onSave }) => {
                 Chuyên khoa <Asterisk size={12} className="text-red-500" />
               </Label>
               <Select
-                value={formData.specialization_id}
+                value={
+                  formData.specialization_id
+                    ? String(formData.specialization_id)
+                    : ""
+                }
                 onValueChange={(v) =>
                   setFormData({ ...formData, specialization_id: Number(v) })
                 }
@@ -333,5 +339,4 @@ const DoctorFormModal = ({ doctor, onClose, onSave }) => {
     </div>
   );
 };
-
 export default DoctorFormModal;

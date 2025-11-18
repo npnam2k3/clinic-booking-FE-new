@@ -22,6 +22,7 @@ const DashboardPage = () => {
   const [weeklyStats, setWeeklyStats] = useState([]);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [messageApi, contextHolder] = message.useMessage();
 
   // 🧭 Gọi API khi load trang
   useEffect(() => {
@@ -32,24 +33,24 @@ const DashboardPage = () => {
         // 1️⃣ Basic Statistic
         const basicRes = await DashboardService.getBasicStatistic();
         const basicErr = validateBasicStatisticResponse(basicRes);
-        if (basicErr) return message.error(basicErr);
+        if (basicErr) return messageApi.error(basicErr);
         setBasicStats(basicRes.data);
 
         // 2️⃣ Weekly Appointment Statistic
         const weeklyRes =
           await DashboardService.getWeeklyAppointmentStatistic();
         const weeklyErr = validateWeeklyAppointmentResponse(weeklyRes);
-        if (weeklyErr) return message.error(weeklyErr);
+        if (weeklyErr) return messageApi.error(weeklyErr);
         setWeeklyStats(weeklyRes.data.weeklyAppointments);
 
         // 3️⃣ Upcoming Appointments
         const upcomingRes = await DashboardService.getUpcomingAppointments();
         const upcomingErr = validateUpcomingAppointmentsResponse(upcomingRes);
-        if (upcomingErr) return message.error(upcomingErr);
+        if (upcomingErr) return messageApi.error(upcomingErr);
         setUpcomingAppointments(upcomingRes.data);
       } catch (err) {
         console.error("❌ Lỗi khi tải dashboard:", err);
-        message.error("Không thể tải dữ liệu Dashboard!");
+        messageApi.error("Không thể tải dữ liệu Dashboard!");
       } finally {
         setLoading(false);
       }
@@ -93,6 +94,7 @@ const DashboardPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500">
+        {contextHolder}
         Đang tải dữ liệu Dashboard...
       </div>
     );
@@ -101,6 +103,7 @@ const DashboardPage = () => {
   if (!basicStats) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-500">
+        {contextHolder}
         Không thể tải dữ liệu Dashboard!
       </div>
     );
@@ -108,6 +111,7 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      {contextHolder}
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-6">
@@ -259,5 +263,4 @@ const DashboardPage = () => {
     </div>
   );
 };
-
 export default DashboardPage;

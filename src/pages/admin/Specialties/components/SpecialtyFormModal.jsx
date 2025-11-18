@@ -33,19 +33,19 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
         });
         messageApi.success("Cập nhật chuyên khoa thành công!");
       } else {
-        // ➕ Thêm mới chuyên khoa
+        // Thêm mới chuyên khoa
         await SpecialtyService.create({
           specialization_name: formData.name,
           description: formData.description,
         });
-        messageApi.success("Thêm chuyên khoa thành công!");
+        messageApi.success("Thêm mới chuyên khoa thành công!");
       }
 
       // Reload danh sách ở trang cha
       onSave?.();
       onClose();
     } catch (error) {
-      messageApi.error("Không thể lưu chuyên khoa, vui lòng thử lại!");
+      messageApi.error("Lưu chuyên khoa thất bại. Vui lòng thử lại!");
     } finally {
       setLoading(false);
     }
@@ -101,7 +101,7 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
                   if (plainText.length <= 500) {
                     setFormData({ ...formData, description: value });
                   } else {
-                    message.warning("Mô tả không được vượt quá 500 ký tự!");
+                    messageApi.warning("Mô tả không được vượt quá 500 ký tự!");
                   }
                 }}
                 placeholder="Mô tả về chuyên môn, kinh nghiệm làm việc..."

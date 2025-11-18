@@ -11,6 +11,7 @@ const DoctorSlotsModal = ({ doctor, onClose }) => {
   const [selectedDate, setSelectedDate] = useState("");
   const [slots, setSlots] = useState([]);
   const [scheduleInfo, setScheduleInfo] = useState(null); // thêm để hiển thị hiệu lực lịch làm việc
+  const [messageApi, contextHolder] = message.useMessage();
 
   // ===============================
   // FETCH CHI TIẾT BÁC SĨ (WORK_SCHEDULE + SLOT)
@@ -30,7 +31,7 @@ const DoctorSlotsModal = ({ doctor, onClose }) => {
           setSlots([]);
         }
       } catch (err) {
-        message.error("Không thể tải dữ liệu ca khám!");
+        messageApi.error("Không thể tải dữ liệu ca khám!");
       } finally {
         setLoading(false);
       }
@@ -62,9 +63,14 @@ const DoctorSlotsModal = ({ doctor, onClose }) => {
   const getSourceBadge = (source) => {
     const badges = {
       work_schedule: { bg: "bg-blue-100 text-blue-900", text: "Lịch làm việc" },
-      special_schedule: { bg: "bg-purple-100 text-purple-900", text: "Lịch đặc biệt" },
+      special_schedule: {
+        bg: "bg-purple-100 text-purple-900",
+        text: "Lịch đặc biệt",
+      },
     };
-    return badges[source] || { bg: "bg-gray-100 text-gray-800", text: "Không rõ" };
+    return (
+      badges[source] || { bg: "bg-gray-100 text-gray-800", text: "Không rõ" }
+    );
   };
 
   // ===============================
@@ -74,9 +80,11 @@ const DoctorSlotsModal = ({ doctor, onClose }) => {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{
-        backgroundColor: "color-mix(in oklab, var(--color-black) 50%, transparent)",
+        backgroundColor:
+          "color-mix(in oklab, var(--color-black) 50%, transparent)",
       }}
     >
+      {contextHolder}
       <div className="max-h-[100vh] w-full max-w-4xl rounded-lg bg-white p-6">
         <h2 className="text-xl font-bold mb-4">
           Ca khám của {doctor.fullname}
@@ -99,7 +107,8 @@ const DoctorSlotsModal = ({ doctor, onClose }) => {
             </p>
             {scheduleInfo.note && (
               <p>
-                <span className="font-semibold">Ghi chú:</span> {scheduleInfo.note}
+                <span className="font-semibold">Ghi chú:</span>{" "}
+                {scheduleInfo.note}
               </p>
             )}
           </div>
@@ -107,7 +116,10 @@ const DoctorSlotsModal = ({ doctor, onClose }) => {
 
         {/* BỘ LỌC */}
         <div className="mb-4 flex items-center gap-3">
-          <Label htmlFor="filter-date" className="text-sm font-medium whitespace-nowrap">
+          <Label
+            htmlFor="filter-date"
+            className="text-sm font-medium whitespace-nowrap"
+          >
             Lọc theo ngày:
           </Label>
           <Input
@@ -142,7 +154,9 @@ const DoctorSlotsModal = ({ doctor, onClose }) => {
                       >
                         <div className="flex flex-col items-center justify-center text-gray-500">
                           <CalendarX className="w-10 h-10 mb-2 text-gray-400" />
-                          <p className="text-sm italic">Không có dữ liệu lịch khám</p>
+                          <p className="text-sm italic">
+                            Không có dữ liệu lịch khám
+                          </p>
                         </div>
                       </td>
                     </tr>
@@ -156,8 +170,12 @@ const DoctorSlotsModal = ({ doctor, onClose }) => {
                           key={slot.slot_id}
                           className="border-b last:border-0 hover:bg-gray-50 transition"
                         >
-                          <td className="p-3 text-sm border-r">{slot.slot_id}</td>
-                          <td className="p-3 text-sm border-r">{slot.slot_date}</td>
+                          <td className="p-3 text-sm border-r">
+                            {slot.slot_id}
+                          </td>
+                          <td className="p-3 text-sm border-r">
+                            {slot.slot_date}
+                          </td>
                           <td className="p-3 text-sm border-r">
                             {slot.start_at} - {slot.end_at}
                           </td>
@@ -197,5 +215,4 @@ const DoctorSlotsModal = ({ doctor, onClose }) => {
     </div>
   );
 };
-
 export default DoctorSlotsModal;

@@ -7,6 +7,7 @@ import { message, Spin } from "antd";
 const HistoryBookingPage = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
 
   // ✅ Gọi API lấy danh sách lịch sử
   const fetchHistory = async () => {
@@ -16,7 +17,7 @@ const HistoryBookingPage = () => {
       setBookings(res || []);
     } catch (err) {
       console.error("❌ Lỗi khi tải lịch sử:", err);
-      message.error("Không thể tải danh sách lịch khám.");
+      messageApi.error("Không thể tải danh sách lịch khám.");
     } finally {
       setLoading(false);
     }
@@ -29,7 +30,7 @@ const HistoryBookingPage = () => {
 
   // ✅ Callback reload khi hủy thành công
   const handleCancelSuccess = () => {
-    message.info("Đang tải lại danh sách...");
+    messageApi.info("Đang tải lại danh sách...");
     fetchHistory();
   };
 
@@ -41,6 +42,7 @@ const HistoryBookingPage = () => {
 
   return (
     <div className="w-[1150px] max-w-[1150px] mx-auto mt-[40px]">
+      {contextHolder}
       {/* title */}
       <div className="mb-[40px]">
         <h1 className="text-3xl font-bold mb-[12px]">Lịch sử đặt lịch</h1>
@@ -105,5 +107,4 @@ const HistoryBookingPage = () => {
     </div>
   );
 };
-
 export default HistoryBookingPage;
