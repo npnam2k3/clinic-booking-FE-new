@@ -33,17 +33,28 @@ const CancelAppointmentModal = ({ appointment, onClose, onConfirm }) => {
         <h2 className="mb-4 text-xl font-bold">Hủy lịch khám</h2>
         <p className="mb-6 text-sm text-gray-600">
           Xác nhận hủy lịch khám cho bệnh nhân{" "}
-          <span className="font-semibold">{appointment.patientName}</span>
+          <span className="font-semibold">{appointment.patient?.fullname}</span>
         </p>
 
         {/* Thông tin lịch khám */}
         <div className="mb-4 rounded-lg bg-yellow-50 p-3">
-          <p className="text-sm font-medium">Mã lịch: {appointment.id}</p>
-          <p className="text-sm">Bác sĩ: {appointment.doctorName}</p>
+          <p className="text-sm font-medium">
+            Mã lịch: {appointment.appointment_id || "—"}
+          </p>
           <p className="text-sm">
-            Thời gian: {appointment.date} lúc {appointment.time}
+            Bệnh nhân: {appointment.patient?.fullname || "—"}
+          </p>
+          <p className="text-sm">
+            Bác sĩ: {appointment.doctor_slot?.doctor?.fullname || "—"}
+          </p>
+          <p className="text-sm">
+            Thời gian:{" "}
+            {appointment.doctor_slot?.slot_date
+              ? `${appointment.doctor_slot.slot_date} (${appointment.doctor_slot.start_at} - ${appointment.doctor_slot.end_at})`
+              : "—"}
           </p>
         </div>
+
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Người hủy */}
@@ -57,8 +68,8 @@ const CancelAppointmentModal = ({ appointment, onClose, onConfirm }) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="patient">Bệnh nhân</SelectItem>
-                <SelectItem value="doctor">Bác sĩ</SelectItem>
-                <SelectItem value="admin">Quản trị viên</SelectItem>
+                <SelectItem value="clinic">Bác sĩ</SelectItem>
+                <SelectItem value="system">Quản trị viên</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -77,10 +88,11 @@ const CancelAppointmentModal = ({ appointment, onClose, onConfirm }) => {
                 <SelectValue placeholder="Chọn lý do" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="busy">Bận việc đột xuất</SelectItem>
-                <SelectItem value="sick">Không thể đến khám</SelectItem>
-                <SelectItem value="reschedule">Cần đổi lịch khác</SelectItem>
-                <SelectItem value="other">Lý do khác</SelectItem>
+                <SelectItem value="REQUESTED_BY_CUSTOMER">Bệnh nhân yêu cầu hủy</SelectItem>
+                <SelectItem value="NO_SHOW">Không đến khám</SelectItem>
+                <SelectItem value="DOCTOR_OFF">Bác sĩ nghỉ</SelectItem>
+                <SelectItem value="CLINIC_RESCHEDULE">Phòng khám đổi lịch</SelectItem>
+                <SelectItem value="AUTO_EXPIRED">Tự động hủy (hết hạn)</SelectItem>
               </SelectContent>
             </Select>
           </div>
