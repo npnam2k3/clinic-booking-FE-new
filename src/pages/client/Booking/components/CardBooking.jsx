@@ -22,6 +22,7 @@ const CardBooking = ({ data, onCancelSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelNote, setCancelNote] = useState("");
+  const [messageApi, contextHolder] = message.useMessage();
 
   const doctor = data?.doctor_slot?.doctor;
   const slot = data?.doctor_slot;
@@ -41,7 +42,7 @@ const CardBooking = ({ data, onCancelSuccess }) => {
       console.log("✅ Cancel response:", res);
 
       if (res?.status || res?.data) {
-        message.success("Hủy lịch khám thành công!");
+        messageApi.success("Hủy lịch khám thành công!");
         setIsCancelModalOpen(false);
         if (onCancelSuccess) onCancelSuccess(); // ✅ gọi reload
       } else {
@@ -49,7 +50,7 @@ const CardBooking = ({ data, onCancelSuccess }) => {
           res?.message ||
           res?.detail?.[0]?.message ||
           "Không thể hủy lịch khám.";
-        message.error(msg);
+        messageApi.error(msg);
       }
     } catch (err) {
       console.error("❌ Lỗi khi hủy lịch:", err);
@@ -57,7 +58,7 @@ const CardBooking = ({ data, onCancelSuccess }) => {
         err?.response?.data?.detail?.[0]?.message ||
         err?.response?.data?.message ||
         "Hủy lịch thất bại. Vui lòng thử lại!";
-      message.error(backendMsg);
+      messageApi.error(backendMsg);
     } finally {
       setLoading(false);
     }
@@ -65,6 +66,7 @@ const CardBooking = ({ data, onCancelSuccess }) => {
 
   return (
     <>
+      {contextHolder}
       <div className="border border-gray-300 px-[20px] py-[30px] rounded-[12px] shadow flex items-end justify-between">
         {/* LEFT */}
         <div className="flex gap-x-[16px] items-start">

@@ -25,6 +25,7 @@ const GenerateSlotsModal = ({ onClose, activeTab }) => {
   const [loading, setLoading] = useState(false);
   const [doctors, setDoctors] = useState([]);
   const [scheduleInfo, setScheduleInfo] = useState(null); // ✅ lưu thông tin lịch làm việc
+  const [messageApi, contextHolder] = message.useMessage();
 
   // 🩺 Lấy danh sách bác sĩ
   useEffect(() => {
@@ -34,7 +35,7 @@ const GenerateSlotsModal = ({ onClose, activeTab }) => {
         setDoctors(res?.doctors || res || []);
       } catch (err) {
         console.error("Lỗi khi tải danh sách bác sĩ:", err);
-        message.error("Không thể tải danh sách bác sĩ!");
+        messageApi.error("Tải danh sách bác sĩ thất bại!");
       }
     };
     fetchDoctors();
@@ -89,11 +90,11 @@ const GenerateSlotsModal = ({ onClose, activeTab }) => {
           activeTab === "new"
             ? "Bác sĩ này chưa có lịch mới!"
             : "Bác sĩ này chưa có lịch hiện tại!";
-        message.warning(msg);
+        messageApi.warning(msg);
       }
     } catch (err) {
       console.error("Lỗi khi tải lịch bác sĩ:", err);
-      message.error("Không thể tải lịch làm việc của bác sĩ!");
+      messageApi.error("Tải lịch làm việc của bác sĩ thất bại!");
     } finally {
       setLoading(false);
     }
@@ -128,7 +129,7 @@ const GenerateSlotsModal = ({ onClose, activeTab }) => {
 
     const error = validateDoctorSlotsRequest(payload);
     if (error) {
-      message.error(error);
+      messageApi.error(error);
       return;
     }
 
@@ -137,17 +138,19 @@ const GenerateSlotsModal = ({ onClose, activeTab }) => {
       const res = await DoctorSlotsService.getDoctorSlots(payload);
 
       if (res.status === false || res.statusCode >= 400) {
-        message.error(res.message || "Không thể tạo slots!");
+        messageApi.error(res.message || "Tạo slots thất bại!");
         return;
       }
 
-      message.success(res.message || "Tạo slot khám thành công!");
+      messageApi.success(res.message || "Tạo slot khám thành công!");
       console.log("Kết quả tạo slots:", res.data);
       onClose();
     } catch (err) {
       console.error("Lỗi khi tạo slots:", err);
       const backendMsg = err?.response?.data?.message;
-      message.error(backendMsg || "Không thể tạo slot khám!");
+      messageApi.error(
+        backendMsg || "Tạo slot khám thất bại. Vui lòng thử lại!"
+      );
     } finally {
       setLoading(false);
     }
@@ -161,6 +164,7 @@ const GenerateSlotsModal = ({ onClose, activeTab }) => {
           "color-mix(in oklab, var(--color-black) 50%, transparent)",
       }}
     >
+      {contextHolder}
       <div className="w-full max-w-2xl rounded-lg bg-white p-6">
         <h2 className="mb-4 text-2xl font-bold">
           Chia slot khám từ lịch làm việc
@@ -290,5 +294,4 @@ const GenerateSlotsModal = ({ onClose, activeTab }) => {
     </div>
   );
 };
-
 export default GenerateSlotsModal;

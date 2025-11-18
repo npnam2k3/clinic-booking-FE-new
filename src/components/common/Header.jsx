@@ -1,15 +1,21 @@
 import { UserAvatarMenu } from "@/components/custom/UserAvatarMenu";
 import { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { userAuthService } from "@/service/auth/userAuth.service";
+import storage from "@/untils/storage";
 
 const Header = () => {
   const [isLogin, setIsLogin] = useState(true);
-  
+  const [isAdminRoute, setIsAdminRoute] = useState(false);
+  const location = useLocation();
+
   useEffect(() => {
     const token = userAuthService.getAccessToken();
     setIsLogin(!!token);
-  }, []);
+
+    // Kiểm tra xem có đang ở trang admin không
+    setIsAdminRoute(location.pathname.startsWith("/admin"));
+  }, [location]);
 
   return (
     <div
@@ -43,53 +49,55 @@ const Header = () => {
       </div>
 
       {/* menu */}
-      <nav>
-        <ul className="flex gap-x-5">
-          <li>
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) =>
-                `px-[10px] cursor-pointer ${
-                  isActive
-                    ? "text-gray-900 font-semibold"
-                    : "text-gray-500 hover:text-gray-900"
-                }`
-              }
-            >
-              Trang chủ
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/chuyen-khoa"
-              className={({ isActive }) =>
-                `px-[10px] cursor-pointer ${
-                  isActive
-                    ? "text-gray-900 font-semibold"
-                    : "text-gray-500 hover:text-gray-900"
-                }`
-              }
-            >
-              Chuyên khoa
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/bac-si"
-              className={({ isActive }) =>
-                `px-[10px] cursor-pointer ${
-                  isActive
-                    ? "text-gray-900 font-semibold"
-                    : "text-gray-500 hover:text-gray-900"
-                }`
-              }
-            >
-              Bác sĩ
-            </NavLink>
-          </li>
-        </ul>
-      </nav>
+      {!isAdminRoute && (
+        <nav>
+          <ul className="flex gap-x-5">
+            <li>
+              <NavLink
+                to="/"
+                end
+                className={({ isActive }) =>
+                  `px-[10px] cursor-pointer ${
+                    isActive
+                      ? "text-gray-900 font-semibold"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`
+                }
+              >
+                Trang chủ
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/chuyen-khoa"
+                className={({ isActive }) =>
+                  `px-[10px] cursor-pointer ${
+                    isActive
+                      ? "text-gray-900 font-semibold"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`
+                }
+              >
+                Chuyên khoa
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/bac-si"
+                className={({ isActive }) =>
+                  `px-[10px] cursor-pointer ${
+                    isActive
+                      ? "text-gray-900 font-semibold"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`
+                }
+              >
+                Bác sĩ
+              </NavLink>
+            </li>
+          </ul>
+        </nav>
+      )}
 
       {/* action */}
       {!isLogin && (

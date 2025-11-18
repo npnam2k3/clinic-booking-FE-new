@@ -21,6 +21,7 @@ const PatientsPage = () => {
   // State tạm cho ô nhập và từ khóa thực dùng để lọc
   const [searchInput, setSearchInput] = useState(initialKeyword);
   const [searchTerm, setSearchTerm] = useState(initialKeyword);
+  const [messageApi, contextHolder] = message.useMessage();
 
   // Hàm tải danh sách bệnh nhân
   const fetchPatients = useCallback(async () => {
@@ -30,7 +31,7 @@ const PatientsPage = () => {
       setPatients(data.patients);
     } catch (error) {
       console.error("Lỗi khi tải danh sách bệnh nhân:", error);
-      message.error("Không thể tải danh sách bệnh nhân!");
+      messageApi.error("Tải danh sách bệnh nhân thất bại!");
     } finally {
       setLoading(false);
     }
@@ -82,11 +83,11 @@ const PatientsPage = () => {
     if (confirm("Bạn có chắc chắn muốn xóa bệnh nhân này?")) {
       try {
         await PatientService.delete(patientCode);
-        message.success("Xóa bệnh nhân thành công!");
+        messageApi.success("Xóa bệnh nhân thành công!");
         fetchPatients();
       } catch (error) {
         console.error("Lỗi khi xóa bệnh nhân:", error);
-        message.error("Không thể xóa bệnh nhân. Vui lòng thử lại!");
+        messageApi.error("Xóa bệnh nhân thất bại. Vui lòng thử lại!");
       }
     }
   };
@@ -98,17 +99,21 @@ const PatientsPage = () => {
 
   // Xem chi tiết bệnh nhân (có thể mở modal hoặc trang chi tiết sau này)
   const handleViewDetail = (patient) => {
-    message.info(`Xem chi tiết: ${patient.fullname}`);
+    messageApi.info(`Xem chi tiết: ${patient.fullname}`);
   };
 
   if (loading) {
     return (
-      <div className="p-6 text-center text-gray-600">Đang tải dữ liệu...</div>
+      <div className="p-6 text-center text-gray-600">
+        {contextHolder}
+        Đang tải dữ liệu...
+      </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      {contextHolder}
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
@@ -185,5 +190,4 @@ const PatientsPage = () => {
     </div>
   );
 };
-
 export default PatientsPage;

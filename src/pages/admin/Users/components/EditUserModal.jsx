@@ -15,6 +15,7 @@ const EditUserModal = ({ user, onClose, onSave }) => {
     user_id: user?.user_id,
     role: user?.role?.role_name || "USER_CLIENT",
   });
+  const [messageApi, contextHolder] = message.useMessage();
 
   const [loading, setLoading] = useState(false);
 
@@ -37,15 +38,15 @@ const EditUserModal = ({ user, onClose, onSave }) => {
         : await UserService.update(formData.user_id, payload);
 
       if (res?.status) {
-        message.success("Cập nhật thông tin thành công!");
+        messageApi.success("Cập nhật thông tin người dùng thành công!");
         onSave(); // Reload danh sách trong UsersPage.jsx
         onClose();
       } else {
-        message.error(res?.message || "Không thể cập nhật người dùng!");
+        messageApi.error(res?.message || "Cập nhật người dùng thất bại!");
       }
     } catch (err) {
       console.error("Lỗi khi cập nhật người dùng:", err);
-      message.error("Cập nhật thất bại, vui lòng thử lại!");
+      messageApi.error("Cập nhật thất bại. Vui lòng thử lại!");
     } finally {
       setLoading(false);
     }
@@ -53,6 +54,7 @@ const EditUserModal = ({ user, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+      {contextHolder}
       <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-lg">
         <h2 className="text-xl font-bold mb-4 text-gray-900">
           Chỉnh sửa thông tin người dùng

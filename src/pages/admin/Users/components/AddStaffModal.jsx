@@ -16,6 +16,7 @@ import { StaffService } from "@/service/staff/staff.service";
 export default function AddStaffModal({ onClose, onSave }) {
   // Trạng thái hiển thị mật khẩu
   const [showPassword, setShowPassword] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
 
   // Dữ liệu form
   const [formData, setFormData] = useState({
@@ -51,15 +52,15 @@ export default function AddStaffModal({ onClose, onSave }) {
       });
 
       if (res.status) {
-        message.success("Thêm nhân viên mới thành công!");
+        messageApi.success("Thêm mới nhân viên thành công!");
         onSave(); // Reload danh sách ở UsersPage
         onClose(); // Đóng modal
       } else {
-        message.error(res.message || "Không thể thêm nhân viên!");
+        messageApi.error(res.message || "Thêm nhân viên thất bại!");
       }
     } catch (err) {
       console.error("Lỗi khi tạo nhân viên:", err);
-      message.error(err.message || "Thêm nhân viên thất bại!");
+      messageApi.error(err.message || "Thêm nhân viên thất bại!");
     } finally {
       setLoading(false);
     }
@@ -67,6 +68,7 @@ export default function AddStaffModal({ onClose, onSave }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
+      {contextHolder}
       <DialogContent className="max-w-[500px] max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold">
