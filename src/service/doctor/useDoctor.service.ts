@@ -9,9 +9,11 @@ export const DoctorService = {
   // ========================
   // LẤY DANH SÁCH BÁC SĨ
   // ========================
-  async getAll(params?: Record<string, any>): Promise<DoctorDto[]> {
+  async getAll(
+    params?: Record<string, any>
+  ): Promise<import("@/untils/dto/doctor.dto").DoctorListResponse> {
     const res = await authorizedRequest("get", BASE_URL, null, { params });
-    // API trả về { data: { doctors: [...] } }
+    // API trả về { data: { doctors: [...], totalRecords, totalPages, conditions } }
     return res.data?.data;
   },
 

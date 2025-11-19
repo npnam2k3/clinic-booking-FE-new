@@ -53,7 +53,14 @@ export default function AddStaffModal({ onClose, onSave }) {
 
       if (res.status) {
         messageApi.success("Thêm mới nhân viên thành công!");
-        onSave(); // Reload danh sách ở UsersPage
+        // Lấy lại danh sách nhân viên và trả về cho parent
+        try {
+          const list = await StaffService.getAll();
+          onSave(list || []);
+        } catch (errList) {
+          console.error("Lỗi khi tải lại danh sách nhân viên:", errList);
+          onSave();
+        }
         onClose(); // Đóng modal
       } else {
         messageApi.error(res.message || "Thêm nhân viên thất bại!");

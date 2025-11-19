@@ -37,7 +37,7 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { path: "", element: <LoginPage /> },
+      { path: "", element: <HomePage /> },
       {
         path: ROUTE.SPECIALTY,
         element: <SpecialtyPage />,

@@ -10,15 +10,45 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
+import { message } from "antd";
+import { AppointmentService } from "@/service/appointment/appointment.service";
 
 const CancelAppointmentModal = ({ appointment, onClose, onConfirm }) => {
   const [cancelBy, setCancelBy] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [note, setNote] = useState("");
+  const [messageApi, contextHolder] = message.useMessage();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onConfirm({ cancelBy, cancelReason, note });
+    try {
+      // Gọi API hủy trong modal để giữ message hiển thị tại modal
+      const res = await AppointmentService.cancel(appointment.appointment_id, {
+        cancellation_party: cancelBy,
+        reason_code: cancelReason,
+        note: note || "",
+      });
+
+      if (res?.status) {
+        messageApi.success("Hủy lịch khám thành công!");
+        // Lấy lại danh sách cuộc hẹn và trả về cho parent
+        try {
+          const data = await AppointmentService.getAll();
+          onConfirm?.(data?.appointments || []);
+        } catch (fetchErr) {
+          console.error("Lỗi khi tải lại danh sách cuộc hẹn:", fetchErr);
+          onConfirm?.();
+        }
+      } else {
+        messageApi.error(res?.message || "Hủy lịch khám thất bại!");
+      }
+    } catch (err) {
+      console.error("Lỗi khi hủy lịch:", err);
+      messageApi.error("Hủy lịch khám thất bại. Vui lòng thử lại!");
+      onConfirm?.();
+    } finally {
+      onClose();
+    }
   };
 
   return (

@@ -41,8 +41,21 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
         messageApi.success("Thêm mới chuyên khoa thành công!");
       }
 
-      // Reload danh sách ở trang cha
-      onSave?.();
+      // Lấy lại danh sách chuyên khoa và trả về cho parent (Plan A)
+      try {
+        const data = await SpecialtyService.getAll();
+        const mapped = data.map((item) => ({
+          id: item.specialization_id,
+          name: item.specialization_name,
+          description: item.description,
+          createdAt: item.createdAt.split("T")[0],
+        }));
+        onSave?.(mapped);
+      } catch (errList) {
+        console.error("Lỗi khi tải lại chuyên khoa:", errList);
+        onSave?.();
+      }
+
       onClose();
     } catch (error) {
       messageApi.error("Lưu chuyên khoa thất bại. Vui lòng thử lại!");

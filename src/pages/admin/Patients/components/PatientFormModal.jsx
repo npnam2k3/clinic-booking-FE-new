@@ -85,7 +85,15 @@ const PatientFormModal = ({ patient, onClose, onSave }) => {
         messageApi.success("Thêm mới bệnh nhân thành công!");
       }
 
-      onSave?.(); // reload danh sách bên ngoài
+      // Lấy lại danh sách bệnh nhân và trả về cho parent để cập nhật state (Plan A)
+      try {
+        const data = await PatientService.getAll();
+        onSave?.(data?.patients || []);
+      } catch (errList) {
+        console.error("Lỗi khi tải lại danh sách bệnh nhân:", errList);
+        onSave?.();
+      }
+
       onClose(); // đóng modal
     } catch (error) {
       console.error("Lỗi khi lưu bệnh nhân:", error);

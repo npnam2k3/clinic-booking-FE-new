@@ -92,9 +92,10 @@ const PatientsPage = () => {
     }
   };
 
-  // Cập nhật danh sách sau khi thêm/sửa
-  const handleAfterSave = () => {
-    fetchPatients();
+  // Cập nhật danh sách sau khi thêm/sửa (nhận dữ liệu cập nhật từ modal nếu có)
+  const handleAfterSave = (updatedData) => {
+    if (updatedData) setPatients(updatedData);
+    else fetchPatients();
   };
 
   // Xem chi tiết bệnh nhân (có thể mở modal hoặc trang chi tiết sau này)

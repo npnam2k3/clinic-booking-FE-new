@@ -138,33 +138,12 @@ const AppointmentsPage = () => {
     setIsCancelModalOpen(true);
   };
 
-  const handleConfirmCancel = async ({ cancelBy, cancelReason, note }) => {
-    try {
-      setLoading(true);
-
-      const res = await AppointmentService.cancel(
-        selectedAppointment.appointment_id,
-        {
-          cancellation_party: cancelBy,
-          reason_code: cancelReason,
-          note: note || "",
-        }
-      );
-
-      if (res.status) {
-        messageApi.success("Hủy lịch khám thành công!");
-        fetchAppointments(); // reload danh sách
-      } else {
-        messageApi.error(res.message || "Hủy lịch khám thất bại!");
-      }
-    } catch (err) {
-      console.error("Lỗi khi hủy lịch:", err);
-      messageApi.error("Hủy lịch khám thất bại. Vui lòng thử lại!");
-    } finally {
-      setLoading(false);
-      setIsCancelModalOpen(false);
-      setSelectedAppointment(null);
-    }
+  // Khi modal trả về danh sách cập nhật, cập nhật state ở trang này
+  const handleConfirmCancel = (updatedAppointments) => {
+    if (updatedAppointments) setAppointments(updatedAppointments);
+    else fetchAppointments();
+    setIsCancelModalOpen(false);
+    setSelectedAppointment(null);
   };
 
   // ===============================

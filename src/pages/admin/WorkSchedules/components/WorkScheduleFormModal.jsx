@@ -117,7 +117,31 @@ const WorkScheduleFormModal = ({ schedule, onClose, onSave }) => {
       }
 
       messageApi.success(res.message || "Tạo lịch làm việc thành công!");
-      onSave?.(res.data);
+      // Lấy lại danh sách lịch (lịch mới) và trả về cho parent theo định dạng giống trang
+      try {
+        const listRes = await WorkScheduleService.getNewWorkSchedules();
+        const formatted = listRes.data.map((doctor, index) => ({
+          id: `SCH${String(index + 1).padStart(3, "0")}`,
+          doctorId: doctor.doctor_id,
+          doctorName: doctor.fullname,
+          slotDuration: doctor.work_schedules[0]?.slot_duration ?? "-",
+          effectiveDate: doctor.work_schedules[0]?.effective_date ?? "-",
+          expireDate: doctor.work_schedules[0]?.expire_date ?? "-",
+          status: "Hiệu lực",
+          workDays: doctor.work_schedules.map((ws) => ({
+            dayOfWeek: ws.day_of_week,
+            startTime: ws.start_time,
+            endTime: ws.end_time,
+            note: ws.note,
+          })),
+        }));
+
+        onSave?.(formatted);
+      } catch (errList) {
+        console.error("Lỗi khi tải lại lịch làm việc:", errList);
+        onSave?.();
+      }
+
       onClose();
     } catch (error) {
       const backendMsg = error?.response?.data?.message;

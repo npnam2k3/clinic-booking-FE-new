@@ -1,6 +1,8 @@
 import { Lock, Pencil, Trash2, Unlock } from "lucide-react";
 import { message } from "antd";
 import { UserLockService } from "@/service/user/user-lock.service";
+import { UserService } from "@/service/user/user.service";
+import { StaffService } from "@/service/staff/staff.service";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -11,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const statusMap = {
   active: { text: "Hoạt động", color: "bg-green-500" },
@@ -29,6 +31,12 @@ const UserTable = ({ data, onEdit, onDelete, onReload, showLock = false }) => {
   const [showLockDialog, setShowLockDialog] = useState(false);
   const [lockAction, setLockAction] = useState(null); // { userId, action: 'lock' | 'unlock' }
   const [messageApi, contextHolder] = message.useMessage();
+  const [localData, setLocalData] = useState(data || []);
+
+  // Sync local data when parent prop changes
+  useEffect(() => {
+    setLocalData(data || []);
+  }, [data]);
 
   // Mở dialog khóa
   const openLockDialog = (userId) => {
@@ -53,6 +61,7 @@ const UserTable = ({ data, onEdit, onDelete, onReload, showLock = false }) => {
     if (!lockAction) return;
 
     try {
+      
       const res =
         lockAction.action === "lock"
           ? await UserLockService.lock(lockAction.userId)
@@ -62,22 +71,30 @@ const UserTable = ({ data, onEdit, onDelete, onReload, showLock = false }) => {
 
       // Kiểm tra nhiều trường hợp response thành công
       const isSuccess =
-        res?.status === true ||
-        res?.statusCode === 200 ||
-        res?.statusCode === 201 ||
+        res?.data?.status === true ||
+        res?.data?.statusCode === 200 ||
+        res?.data?.statusCode === 201 ||
         (res && !res.error);
 
       if (isSuccess) {
-        // Hiển thị message từ backend, nếu không có thì dùng message mặc định
-        messageApi.success(
-          res?.message ||
-            (lockAction.action === "lock"
-              ? "Khóa tài khoản thành công!"
-              : "Mở khóa tài khoản thành công!")
-        );
+        messageApi.success(res?.data?.message);
+        // Sau khi khóa/mở khóa thành công, gọi lại API list tại component này
+        try {
+          if (showLock) {
+            // staff list
+            const list = await StaffService.getAll();
+            setLocalData(list || []);
+          } else {
+            // users list (API trả về { users: [...] })
+            const list = await UserService.getAll();
+            setLocalData(list?.users || list || []);
+          }
+        } catch (fetchErr) {
+          console.error("Lỗi khi tải lại danh sách sau khóa/mở khóa:", fetchErr);
+        }
+
         setShowLockDialog(false);
         setLockAction(null);
-        onReload?.();
       } else {
         messageApi.error(
           res?.message ||
@@ -109,6 +126,7 @@ const UserTable = ({ data, onEdit, onDelete, onReload, showLock = false }) => {
   return (
     <>
       <div className="rounded-lg bg-white shadow-sm overflow-x-auto">
+        {contextHolder}
         <table className="w-full min-w-[800px]">
           <thead className="bg-gray-50 border-b text-sm text-gray-600">
             <tr>
@@ -121,7 +139,7 @@ const UserTable = ({ data, onEdit, onDelete, onReload, showLock = false }) => {
             </tr>
           </thead>
           <tbody>
-            {data.map((u) => (
+            {localData.map((u) => (
               <tr key={u.user_id || u.id} className="border-b hover:bg-gray-50">
                 <td className="p-4">{u.contact?.fullname}</td>
                 <td className="p-4">{u.email}</td>
