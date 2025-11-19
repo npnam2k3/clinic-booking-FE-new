@@ -52,7 +52,9 @@ const SpecialtiesTable = ({ specialties, handleEdit, handleDelete }) => {
                         <Pencil className="h-4 w-4 text-gray-600" />
                       </button>
                       <button
-                        onClick={() => handleDelete(specialty.id)}
+                        onClick={() =>
+                          handleDelete(specialty.id, specialty.name)
+                        }
                         className="rounded cursor-pointer p-1 hover:bg-gray-100"
                         title="Xóa"
                       >

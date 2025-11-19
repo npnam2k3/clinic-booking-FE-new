@@ -6,6 +6,7 @@ import WorkScheduleFormModal from "@/pages/admin/WorkSchedules/components/WorkSc
 import GenerateSlotsModal from "@/pages/admin/WorkSchedules/components/GenerateSlotsModal";
 import { WorkScheduleService } from "@/service/work_shedule/work_shedule.service";
 import { useNavigate, useLocation } from "react-router-dom";
+import { message } from "antd";
 
 const WorkSchedulesPage = () => {
   const [schedules, setSchedules] = useState([]);
@@ -19,6 +20,7 @@ const WorkSchedulesPage = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const [messageApi, contextHolder] = message.useMessage();
 
   // 🧭 Đọc search param từ URL khi load trang
   useEffect(() => {
@@ -177,11 +179,14 @@ const WorkSchedulesPage = () => {
         {isAddModalOpen && (
           <WorkScheduleFormModal
             onClose={() => setIsAddModalOpen(false)}
-            onSave={(updatedData) => {
+            onSave={(updatedData, successMessage) => {
+              if (successMessage) messageApi.success(successMessage);
               if (updatedData) setSchedules(updatedData);
               else fetchSchedules();
               setIsAddModalOpen(false);
             }}
+            onError={(msg) => messageApi.error(msg)}
+            onSuccess={(msg) => messageApi.success(msg)}
           />
         )}
 
@@ -190,8 +195,11 @@ const WorkSchedulesPage = () => {
           <GenerateSlotsModal
             onClose={() => setIsSlotGenerateModalOpen(false)}
             activeTab={activeTab}
+            onSuccess={(msg) => messageApi.success(msg)}
+            onError={(msg) => messageApi.error(msg)}
           />
         )}
+        {contextHolder}
       </div>
     </div>
   );

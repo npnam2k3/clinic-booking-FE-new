@@ -133,93 +133,106 @@ const DoctorPage = () => {
   // JSX
   // ===============================
   return (
-    <div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       {contextHolder}
       <Banner />
 
-      <div className="max-w-[1250px] mx-auto">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Bộ lọc & tìm kiếm */}
-        <div className="outline outline-gray-200 my-[40px] p-[20px] rounded-[8px] grid grid-cols-[3fr_2fr_1fr_2fr] gap-x-[16px]">
-          {/* Ô tìm kiếm */}
-          <div className="relative flex items-center">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-              size={18}
-            />
-            <Input
-              type="text"
-              placeholder="Tìm kiếm bác sĩ theo tên..."
-              className="px-10"
-              value={pendingKeyword}
-              onChange={(e) => setPendingKeyword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
-          </div>
+        <div className="bg-white border border-gray-200 shadow-lg rounded-2xl p-6 mb-8 hover:shadow-xl transition-shadow">
+          <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr_1fr_2fr] gap-4">
+            {/* Ô tìm kiếm */}
+            <div className="relative flex items-center">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                size={20}
+              />
+              <Input
+                type="text"
+                placeholder="Tìm kiếm bác sĩ theo tên..."
+                className="pl-11 h-11 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                value={pendingKeyword}
+                onChange={(e) => setPendingKeyword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              />
+            </div>
 
-          {/* Lọc theo chuyên khoa */}
-          <Select
-            value={pendingSpecialty}
-            onValueChange={(value) => setPendingSpecialty(value)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Chuyên khoa" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="all">Tất cả chuyên khoa</SelectItem>
-                {specialties.map((spec) => (
-                  <SelectItem
-                    key={spec.specialization_id}
-                    value={String(spec.specialization_id)}
-                  >
-                    {spec.specialization_name}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+            {/* Lọc theo chuyên khoa */}
+            <Select
+              value={pendingSpecialty}
+              onValueChange={(value) => setPendingSpecialty(value)}
+            >
+              <SelectTrigger className="w-full h-11 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all">
+                <SelectValue placeholder="Chuyên khoa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="all">Tất cả chuyên khoa</SelectItem>
+                  {specialties.map((spec) => (
+                    <SelectItem
+                      key={spec.specialization_id}
+                      value={String(spec.specialization_id)}
+                    >
+                      {spec.specialization_name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
 
-          {/* Nút tìm */}
-          <Button
-            variant="outline"
-            className="cursor-pointer hover:bg-gray-300 max-w-[100px]"
-            onClick={handleSearch}
-          >
-            <FunnelPlus size={18} />
-            <span>Tìm</span>
-          </Button>
+            {/* Nút tìm */}
+            <Button
+              className="h-11 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white cursor-pointer shadow-md hover:shadow-lg transition-all"
+              onClick={handleSearch}
+            >
+              <FunnelPlus size={18} className="mr-2" />
+              <span>Tìm kiếm</span>
+            </Button>
 
-          {/* Tổng số bác sĩ */}
-          <div className="flex items-center justify-center">
-            <p className="font-semibold bg-sky-200 px-3 py-1 rounded-md">
-              Tìm thấy {totalRecords} bác sĩ
-            </p>
+            {/* Tổng số bác sĩ */}
+            <div className="flex items-center justify-center">
+              <div className="bg-gradient-to-r from-blue-100 to-cyan-100 border border-blue-200 px-4 py-2 rounded-xl shadow-sm">
+                <p className="font-semibold text-blue-800">
+                  <span className="text-2xl">{totalRecords}</span>
+                  <span className="text-sm ml-2">bác sĩ</span>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Danh sách bác sĩ */}
         <Spin spinning={loading}>
-          <div className="mb-[40px] flex flex-wrap items-center gap-[20px]">
+          <div className="mb-12">
             {doctors.length > 0 ? (
-              doctors.map((doctor) => (
-                <Doctor key={doctor.doctor_id} doctor={doctor} />
-              ))
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {doctors.map((doctor) => (
+                  <Doctor key={doctor.doctor_id} doctor={doctor} />
+                ))}
+              </div>
             ) : (
-              <p className="text-gray-500 text-center w-full">
-                Không tìm thấy bác sĩ nào.
-              </p>
+              <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-md">
+                <p className="text-gray-500 text-lg">
+                  Không tìm thấy bác sĩ nào phù hợp.
+                </p>
+                <p className="text-gray-400 text-sm mt-2">
+                  Vui lòng thử lại với từ khóa khác.
+                </p>
+              </div>
             )}
           </div>
         </Spin>
 
         {/* Phân trang */}
-        <div className="mb-[60px]">
-          <CustomPagination
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={(p) => setPage(p)}
-          />
-        </div>
+        {totalPages > 1 && (
+          <div className="mb-16 flex justify-center">
+            <CustomPagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={(p) => setPage(p)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

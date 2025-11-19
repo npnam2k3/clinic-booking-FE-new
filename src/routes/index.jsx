@@ -26,6 +26,7 @@ import UsersPage from "@/pages/admin/Users/UsersPage";
 import { createBrowserRouter } from "react-router-dom";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AdminProtectedRoute from "@/components/auth/AdminProtectedRoute";
+import RoleBasedRedirect from "@/components/auth/RoleBasedRedirect";
 
 export const router = createBrowserRouter([
   // Client routes
@@ -33,7 +34,9 @@ export const router = createBrowserRouter([
     path: ROUTE.HOME,
     element: (
       <ProtectedRoute>
-        <ClientLayout />
+        <RoleBasedRedirect>
+          <ClientLayout />
+        </RoleBasedRedirect>
       </ProtectedRoute>
     ),
     children: [

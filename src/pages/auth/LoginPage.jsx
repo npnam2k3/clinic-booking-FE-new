@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,28 @@ const LoginPage = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
+  // Kiểm tra nếu đã đăng nhập thì redirect theo role
+  useEffect(() => {
+    const token = storage.getToken();
+    const tokenInfo = storage.getTokenInfo();
+
+    if (token && tokenInfo) {
+      try {
+        const userInfo =
+          typeof tokenInfo === "string" ? JSON.parse(tokenInfo) : tokenInfo;
+        const role = userInfo?.role?.role_name || null;
+
+        if (role === "ADMIN" || role === "STAFF") {
+          navigate("/admin", { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
+      } catch (e) {
+        console.error("Không thể đọc role từ token info:", e);
+      }
+    }
+  }, [navigate]);
+
   // Xử lý khi người dùng nhập
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -38,10 +60,13 @@ const LoginPage = () => {
       setLoading(true);
       const res = await userAuthService.login(values);
       if (res.status) {
-        if(res.data.role.role_name === "ADMIN" || res.data.role.role_name === "STAFF"){
-            messageApi.success(res.message || "Đăng nhập thành công!");
-            navigate("/admin");
-        }else{      
+        if (
+          res.data.role.role_name === "ADMIN" ||
+          res.data.role.role_name === "STAFF"
+        ) {
+          messageApi.success(res.message || "Đăng nhập thành công!");
+          navigate("/admin");
+        } else {
           messageApi.success(res.message || "Đăng nhập thành công!");
           navigate("/");
         }

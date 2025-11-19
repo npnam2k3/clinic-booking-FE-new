@@ -139,7 +139,8 @@ const AppointmentsPage = () => {
   };
 
   // Khi modal trả về danh sách cập nhật, cập nhật state ở trang này
-  const handleConfirmCancel = (updatedAppointments) => {
+  const handleConfirmCancel = (updatedAppointments, successMessage) => {
+    if (successMessage) messageApi.success(successMessage);
     if (updatedAppointments) setAppointments(updatedAppointments);
     else fetchAppointments();
     setIsCancelModalOpen(false);
@@ -240,6 +241,7 @@ const AppointmentsPage = () => {
               setSelectedAppointment(null);
             }}
             onConfirm={handleConfirmCancel}
+            onError={(msg) => messageApi.error(msg)}
           />
         )}
       </div>

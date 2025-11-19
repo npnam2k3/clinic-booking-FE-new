@@ -14,6 +14,14 @@ import DoctorFormModal from "@/pages/admin/Doctors/components/DoctorFormModal";
 import DoctorSlotsModal from "@/pages/admin/Doctors/components/DoctorSlotModal";
 import { DoctorService } from "@/service/doctor/useDoctor.service";
 import { SpecialtyService } from "@/service/specialty/specialty.service";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const DoctorsPage = () => {
   const [doctors, setDoctors] = useState([]);
@@ -104,17 +112,27 @@ const DoctorsPage = () => {
     setSelectedDoctor(doctor);
     setIsEditModalOpen(true);
   };
+  // delete flow: open dialog first, perform delete on confirm
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { id, fullname }
 
-  const handleDelete = async (doctorId) => {
-    if (confirm("Bạn có chắc chắn muốn xóa bác sĩ này?")) {
-      try {
-        await DoctorService.delete(doctorId);
-        messageApi.success("Xóa bác sĩ thành công!");
-        fetchDoctors();
-      } catch (err) {
-        console.error("Lỗi khi xóa bác sĩ:", err);
-        messageApi.error("Xóa bác sĩ thất bại. Vui lòng thử lại!");
-      }
+  const handleDelete = (doctorId, doctorName) => {
+    setDeleteTarget({ id: doctorId, fullname: doctorName });
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await DoctorService.delete(deleteTarget.id);
+      messageApi.success("Xóa bác sĩ thành công!");
+      fetchDoctors();
+    } catch (err) {
+      console.error("Lỗi khi xóa bác sĩ:", err);
+      messageApi.error("Xóa bác sĩ thất bại. Vui lòng thử lại!");
+    } finally {
+      setShowDeleteDialog(false);
+      setDeleteTarget(null);
     }
   };
 
@@ -256,7 +274,9 @@ const DoctorsPage = () => {
                             <Pencil className="h-4 w-4 text-gray-600" />
                           </button>
                           <button
-                            onClick={() => handleDelete(doctor.doctor_id)}
+                            onClick={() =>
+                              handleDelete(doctor.doctor_id, doctor.fullname)
+                            }
                             className="rounded p-1 hover:bg-gray-100"
                             title="Xóa"
                           >
@@ -302,6 +322,29 @@ const DoctorsPage = () => {
             }}
           />
         )}
+        {/* Delete confirmation dialog */}
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Xác nhận xóa bác sĩ</DialogTitle>
+              <DialogDescription>
+                Bạn có chắc chắn muốn xóa bác sĩ "{deleteTarget?.fullname}"
+                không?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteDialog(false)}
+              >
+                Hủy
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Xóa
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

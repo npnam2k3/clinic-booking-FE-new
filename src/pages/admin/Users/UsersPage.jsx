@@ -128,20 +128,46 @@ const UsersPage = () => {
   // ===============================
   const handleSaveEdit = async (updatedData) => {
     // If modal provided updated data, use it to update state (avoid re-fetch that may clear messages)
-    if (updatedData) {
-      if (activeTab === "staff") setStaffList(updatedData);
-      else setUserList(updatedData);
+    const { data: list, message: successMessage } =
+      updatedData &&
+      typeof updatedData === "object" &&
+      !(updatedData instanceof Array)
+        ? {
+            data: updatedData.data || updatedData,
+            message: updatedData.message,
+          }
+        : { data: updatedData, message: undefined };
+
+    if (list) {
+      if (activeTab === "staff") setStaffList(list);
+      else setUserList(list);
     } else {
       if (activeTab === "staff") fetchStaff();
       else fetchUsers();
     }
+
+    if (successMessage) messageApi.success(successMessage);
+
     setIsEditOpen(false);
     setSelectedUser(null);
   };
 
   const handleAddStaff = async (updatedData) => {
-    if (updatedData) setStaffList(updatedData);
+    const { data: list, message: successMessage } =
+      updatedData &&
+      typeof updatedData === "object" &&
+      !(updatedData instanceof Array)
+        ? {
+            data: updatedData.data || updatedData,
+            message: updatedData.message,
+          }
+        : { data: updatedData, message: undefined };
+
+    if (list) setStaffList(list);
     else await fetchStaff();
+
+    if (successMessage) messageApi.success(successMessage);
+
     setIsAddStaffOpen(false);
   };
 
