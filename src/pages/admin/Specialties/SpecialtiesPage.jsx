@@ -70,9 +70,10 @@ const SpecialtiesPage = () => {
     }
   };
 
-  // ✅ Sau khi thêm hoặc sửa
-  const handleAfterSave = () => {
-    fetchSpecialties();
+  // ✅ Sau khi thêm hoặc sửa (nhận dữ liệu cập nhật từ modal nếu có)
+  const handleAfterSave = (updatedData) => {
+    if (updatedData) setSpecialties(updatedData);
+    else fetchSpecialties();
   };
 
   // 🔍 Khi ấn nút tìm kiếm

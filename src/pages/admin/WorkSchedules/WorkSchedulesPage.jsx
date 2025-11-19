@@ -177,10 +177,10 @@ const WorkSchedulesPage = () => {
         {isAddModalOpen && (
           <WorkScheduleFormModal
             onClose={() => setIsAddModalOpen(false)}
-            onSave={() => {
+            onSave={(updatedData) => {
+              if (updatedData) setSchedules(updatedData);
+              else fetchSchedules();
               setIsAddModalOpen(false);
-              // 🔄 Gọi lại danh sách sau khi thêm mới
-              fetchSchedules();
             }}
           />
         )}

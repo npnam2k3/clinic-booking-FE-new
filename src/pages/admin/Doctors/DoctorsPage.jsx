@@ -118,8 +118,10 @@ const DoctorsPage = () => {
     }
   };
 
-  const handleSave = async () => {
-    fetchDoctors();
+  const handleSave = async (updatedData, successMessage) => {
+    if (successMessage) messageApi.success(successMessage);
+    if (updatedData) setDoctors(updatedData);
+    else await fetchDoctors();
     setIsAddModalOpen(false);
     setIsEditModalOpen(false);
     setSelectedDoctor(null);

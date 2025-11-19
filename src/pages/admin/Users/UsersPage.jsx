@@ -126,15 +126,22 @@ const UsersPage = () => {
   // ===============================
   // LƯU / THÊM / XÓA
   // ===============================
-  const handleSaveEdit = async () => {
-    if (activeTab === "staff") fetchStaff();
-    else fetchUsers();
+  const handleSaveEdit = async (updatedData) => {
+    // If modal provided updated data, use it to update state (avoid re-fetch that may clear messages)
+    if (updatedData) {
+      if (activeTab === "staff") setStaffList(updatedData);
+      else setUserList(updatedData);
+    } else {
+      if (activeTab === "staff") fetchStaff();
+      else fetchUsers();
+    }
     setIsEditOpen(false);
     setSelectedUser(null);
   };
 
-  const handleAddStaff = async () => {
-    fetchStaff();
+  const handleAddStaff = async (updatedData) => {
+    if (updatedData) setStaffList(updatedData);
+    else await fetchStaff();
     setIsAddStaffOpen(false);
   };
 
