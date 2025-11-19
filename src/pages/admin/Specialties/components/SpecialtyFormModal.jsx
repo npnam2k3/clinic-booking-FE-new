@@ -5,7 +5,7 @@ import { SpecialtyService } from "@/service/specialty/specialty.service";
 import { message } from "antd";
 
 const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
-  const [messageApi, contextHolder] = message.useMessage();
+  // use global message so parent can render success messages reliably
   const [formData, setFormData] = useState(
     specialty || {
       name: "",
@@ -20,7 +20,7 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
 
     try {
       if (!formData.name.trim()) {
-        messageApi.warning("Vui lòng nhập tên chuyên khoa!");
+        message.warning("Vui lòng nhập tên chuyên khoa!");
         setLoading(false);
         return;
       }
@@ -31,21 +31,38 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
           specialization_name: formData.name,
           description: formData.description,
         });
-        messageApi.success("Cập nhật chuyên khoa thành công!");
       } else {
-        // ➕ Thêm mới chuyên khoa
+        // Thêm mới chuyên khoa
         await SpecialtyService.create({
           specialization_name: formData.name,
           description: formData.description,
         });
-        messageApi.success("Thêm chuyên khoa thành công!");
       }
 
-      // Reload danh sách ở trang cha
-      onSave?.();
+      // Lấy lại danh sách chuyên khoa và trả về cho parent (Plan A)
+      try {
+        const data = await SpecialtyService.getAll();
+        const mapped = data.map((item) => ({
+          id: item.specialization_id,
+          name: item.specialization_name,
+          description: item.description,
+          createdAt: item.createdAt.split("T")[0],
+        }));
+        // notify parent and provide success message
+        onSave?.(
+          mapped,
+          specialty
+            ? "Cập nhật chuyên khoa thành công!"
+            : "Thêm mới chuyên khoa thành công!"
+        );
+      } catch (errList) {
+        console.error("Lỗi khi tải lại chuyên khoa:", errList);
+        onSave?.();
+      }
+
       onClose();
     } catch (error) {
-      messageApi.error("Không thể lưu chuyên khoa, vui lòng thử lại!");
+      message.error("Lưu chuyên khoa thất bại. Vui lòng thử lại!");
     } finally {
       setLoading(false);
     }
@@ -59,7 +76,6 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
           "color-mix(in oklab, var(--color-black) 50%, transparent)",
       }}
     >
-      {contextHolder}
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
         <h2 className="mb-4 text-xl font-bold">
           {specialty ? "Chỉnh sửa chuyên khoa" : "Thêm chuyên khoa mới"}

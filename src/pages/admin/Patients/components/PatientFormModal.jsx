@@ -9,10 +9,9 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
-import { message } from "antd";
 import { PatientService } from "@/service/patient/patient.service";
 
-const PatientFormModal = ({ patient, onClose, onSave }) => {
+const PatientFormModal = ({ patient, onClose, onSave, onError, onSuccess }) => {
   const [formData, setFormData] = useState(
     patient
       ? {
@@ -60,7 +59,7 @@ const PatientFormModal = ({ patient, onClose, onSave }) => {
     try {
       // Validate đơn giản
       if (!formData.fullname.trim() || !formData.phone_number.trim()) {
-        message.warning("Vui lòng nhập đầy đủ họ tên và số điện thoại");
+        onError?.("Vui lòng nhập đầy đủ họ tên và số điện thoại");
         setLoading(false);
         return;
       }
@@ -77,18 +76,39 @@ const PatientFormModal = ({ patient, onClose, onSave }) => {
       if (patient) {
         // Cập nhật bệnh nhân
         await PatientService.update(patient.patient_code, payload);
-        message.success("Cập nhật bệnh nhân thành công!");
       } else {
         // Thêm mới bệnh nhân
         await PatientService.create(payload);
-        message.success("Thêm bệnh nhân mới thành công!");
       }
 
-      onSave?.(); // reload danh sách bên ngoài
+      // Lấy lại danh sách bệnh nhân và trả về cho parent để cập nhật state (Plan A)
+      try {
+        const data = await PatientService.getAll();
+        onSave?.(
+          data?.patients || [],
+          patient
+            ? "Cập nhật thông tin bệnh nhân thành công!"
+            : "Thêm mới bệnh nhân thành công!"
+        );
+        onSuccess?.(
+          patient
+            ? "Cập nhật thông tin bệnh nhân thành công!"
+            : "Thêm mới bệnh nhân thành công!"
+        );
+      } catch (errList) {
+        console.error("Lỗi khi tải lại danh sách bệnh nhân:", errList);
+        onSave?.();
+      }
+
       onClose(); // đóng modal
     } catch (error) {
       console.error("Lỗi khi lưu bệnh nhân:", error);
-      message.error("Không thể lưu thông tin bệnh nhân, vui lòng thử lại!");
+      const backendMsg =
+        error?.response?.data?.message ||
+        (error?.message && String(error.message));
+      onError?.(
+        backendMsg || "Lưu thông tin bệnh nhân thất bại. Vui lòng thử lại!"
+      );
     } finally {
       setLoading(false);
     }
@@ -223,5 +243,4 @@ const PatientFormModal = ({ patient, onClose, onSave }) => {
     </div>
   );
 };
-
 export default PatientFormModal;

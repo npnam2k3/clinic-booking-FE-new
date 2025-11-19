@@ -24,12 +24,21 @@ import WorkSchedulesPage from "@/pages/admin/WorkSchedules/WorkSchedulesPage";
 import SpecialSchedulesPage from "@/pages/admin/SpecialSchedules/SpecialSchedulesPage";
 import UsersPage from "@/pages/admin/Users/UsersPage";
 import { createBrowserRouter } from "react-router-dom";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import AdminProtectedRoute from "@/components/auth/AdminProtectedRoute";
+import RoleBasedRedirect from "@/components/auth/RoleBasedRedirect";
 
 export const router = createBrowserRouter([
   // Client routes
   {
     path: ROUTE.HOME,
-    element: <ClientLayout />,
+    element: (
+      <ProtectedRoute>
+        <RoleBasedRedirect>
+          <ClientLayout />
+        </RoleBasedRedirect>
+      </ProtectedRoute>
+    ),
     children: [
       { path: "", element: <HomePage /> },
       {
@@ -49,7 +58,7 @@ export const router = createBrowserRouter([
         element: <DoctorDetail />,
       },
       {
-        path: `${ROUTE.BOOKING}/:id`,
+        path: `${ROUTE.BOOKING}`,
         element: <BookingPage />,
       },
       {
@@ -65,7 +74,11 @@ export const router = createBrowserRouter([
   // Admin routes
   {
     path: "/admin",
-    element: <AdminLayout />,
+    element: (
+      <AdminProtectedRoute>
+        <AdminLayout />
+      </AdminProtectedRoute>
+    ),
     children: [
       { path: "", element: <DashboardPage /> },
       { path: "doctors", element: <DoctorsPage /> },

@@ -10,15 +10,67 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
+import { AppointmentService } from "@/service/appointment/appointment.service";
 
-const CancelAppointmentModal = ({ appointment, onClose, onConfirm }) => {
+const CancelAppointmentModal = ({
+  appointment,
+  onClose,
+  onConfirm,
+  onError,
+}) => {
   const [cancelBy, setCancelBy] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [note, setNote] = useState("");
+  // messages are delegated to parent via onConfirm/onError so toasts remain visible
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onConfirm({ cancelBy, cancelReason, note });
+    try {
+      // Gọi API hủy trong modal để giữ message hiển thị tại modal
+      const res = await AppointmentService.cancel(appointment.appointment_id, {
+        cancellation_party: cancelBy,
+        reason_code: cancelReason,
+        note: note || "",
+      });
+
+      if (res?.status) {
+        // Lấy lại danh sách cuộc hẹn và trả về cho parent (kèm message)
+        try {
+          const data = await AppointmentService.getAll();
+          onConfirm?.(data?.appointments || [], "Hủy lịch khám thành công!");
+        } catch (fetchErr) {
+          console.error("Lỗi khi tải lại danh sách cuộc hẹn:", fetchErr);
+          // nếu fetch lại thất bại thì để parent tự fetch và vẫn hiện message
+          onConfirm?.(null, "Hủy lịch khám thành công!");
+        }
+      } else {
+        // Try to extract detailed errors from response
+        const detail = res?.detail;
+        let errMsg = res?.message || "Hủy lịch khám thất bại!";
+        if (Array.isArray(detail) && detail.length > 0) {
+          errMsg = detail
+            .map((d) =>
+              d?.message ? d.message : `${d?.field || ""}: ${JSON.stringify(d)}`
+            )
+            .join("; ");
+        } else if (
+          detail &&
+          typeof detail === "object" &&
+          Object.keys(detail).length > 0
+        ) {
+          if (detail.message) errMsg = detail.message;
+          else errMsg = Object.values(detail).join("; ");
+        }
+        onError?.(errMsg);
+      }
+    } catch (err) {
+      console.error("Lỗi khi hủy lịch:", err);
+      const apiMsg = err?.response?.data?.message || err?.message;
+      onError?.(apiMsg || "Hủy lịch khám thất bại. Vui lòng thử lại!");
+      onConfirm?.();
+    } finally {
+      onClose();
+    }
   };
 
   return (
@@ -33,15 +85,25 @@ const CancelAppointmentModal = ({ appointment, onClose, onConfirm }) => {
         <h2 className="mb-4 text-xl font-bold">Hủy lịch khám</h2>
         <p className="mb-6 text-sm text-gray-600">
           Xác nhận hủy lịch khám cho bệnh nhân{" "}
-          <span className="font-semibold">{appointment.patientName}</span>
+          <span className="font-semibold">{appointment.patient?.fullname}</span>
         </p>
 
         {/* Thông tin lịch khám */}
         <div className="mb-4 rounded-lg bg-yellow-50 p-3">
-          <p className="text-sm font-medium">Mã lịch: {appointment.id}</p>
-          <p className="text-sm">Bác sĩ: {appointment.doctorName}</p>
+          <p className="text-sm font-medium">
+            Mã lịch: {appointment.appointment_id || "—"}
+          </p>
           <p className="text-sm">
-            Thời gian: {appointment.date} lúc {appointment.time}
+            Bệnh nhân: {appointment.patient?.fullname || "—"}
+          </p>
+          <p className="text-sm">
+            Bác sĩ: {appointment.doctor_slot?.doctor?.fullname || "—"}
+          </p>
+          <p className="text-sm">
+            Thời gian:{" "}
+            {appointment.doctor_slot?.slot_date
+              ? `${appointment.doctor_slot.slot_date} (${appointment.doctor_slot.start_at} - ${appointment.doctor_slot.end_at})`
+              : "—"}
           </p>
         </div>
 
@@ -57,8 +119,8 @@ const CancelAppointmentModal = ({ appointment, onClose, onConfirm }) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="patient">Bệnh nhân</SelectItem>
-                <SelectItem value="doctor">Bác sĩ</SelectItem>
-                <SelectItem value="admin">Quản trị viên</SelectItem>
+                <SelectItem value="clinic">Bác sĩ</SelectItem>
+                <SelectItem value="system">Quản trị viên</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -77,10 +139,17 @@ const CancelAppointmentModal = ({ appointment, onClose, onConfirm }) => {
                 <SelectValue placeholder="Chọn lý do" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="busy">Bận việc đột xuất</SelectItem>
-                <SelectItem value="sick">Không thể đến khám</SelectItem>
-                <SelectItem value="reschedule">Cần đổi lịch khác</SelectItem>
-                <SelectItem value="other">Lý do khác</SelectItem>
+                <SelectItem value="REQUESTED_BY_CUSTOMER">
+                  Bệnh nhân yêu cầu hủy
+                </SelectItem>
+                <SelectItem value="NO_SHOW">Không đến khám</SelectItem>
+                <SelectItem value="DOCTOR_OFF">Bác sĩ nghỉ</SelectItem>
+                <SelectItem value="CLINIC_RESCHEDULE">
+                  Phòng khám đổi lịch
+                </SelectItem>
+                <SelectItem value="AUTO_EXPIRED">
+                  Tự động hủy (hết hạn)
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

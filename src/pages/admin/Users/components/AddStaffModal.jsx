@@ -10,10 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Asterisk } from "lucide-react";
 import { useState } from "react";
-import { message } from "antd";
 import { StaffService } from "@/service/staff/staff.service";
 
-export default function AddStaffModal({ onClose, onSave }) {
+export default function AddStaffModal({ onClose, onSave, onError }) {
   // Trạng thái hiển thị mật khẩu
   const [showPassword, setShowPassword] = useState(false);
 
@@ -51,15 +50,26 @@ export default function AddStaffModal({ onClose, onSave }) {
       });
 
       if (res.status) {
-        message.success("Thêm nhân viên mới thành công!");
-        onSave(); // Reload danh sách ở UsersPage
+        // Lấy lại danh sách nhân viên và trả về cho parent
+        try {
+          const list = await StaffService.getAll();
+          onSave({
+            data: list || [],
+            message: "Thêm mới nhân viên thành công!",
+          });
+        } catch (errList) {
+          console.error("Lỗi khi tải lại danh sách nhân viên:", errList);
+          onSave();
+        }
         onClose(); // Đóng modal
       } else {
-        message.error(res.message || "Không thể thêm nhân viên!");
+        if (typeof onError === "function")
+          onError(res.message || "Thêm nhân viên thất bại!");
       }
     } catch (err) {
       console.error("Lỗi khi tạo nhân viên:", err);
-      message.error(err.message || "Thêm nhân viên thất bại!");
+      if (typeof onError === "function")
+        onError(err?.message || "Thêm nhân viên thất bại!");
     } finally {
       setLoading(false);
     }

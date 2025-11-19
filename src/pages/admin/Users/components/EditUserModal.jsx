@@ -2,11 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { message } from "antd";
 import { StaffService } from "@/service/staff/staff.service";
 import { UserService } from "@/service/user/user.service";
 
-const EditUserModal = ({ user, onClose, onSave }) => {
+const EditUserModal = ({ user, onClose, onSave, onError }) => {
   const [formData, setFormData] = useState({
     fullname: user?.contact?.fullname || "",
     phone_number: user?.contact?.phone_number || "",
@@ -37,15 +36,35 @@ const EditUserModal = ({ user, onClose, onSave }) => {
         : await UserService.update(formData.user_id, payload);
 
       if (res?.status) {
-        message.success("Cập nhật thông tin thành công!");
-        onSave(); // Reload danh sách trong UsersPage.jsx
+        // Sau khi cập nhật thành công, gọi lại API list tương ứng và trả về dữ liệu mới cho parent
+        try {
+          if (isStaff) {
+            const list = await StaffService.getAll();
+            onSave({
+              data: list || [],
+              message: "Cập nhật thông tin người dùng thành công!",
+            });
+          } else {
+            const data = await UserService.getAll();
+            onSave({
+              data: data?.users || [],
+              message: "Cập nhật thông tin người dùng thành công!",
+            });
+          }
+        } catch (errList) {
+          console.error("Lỗi khi tải lại danh sách sau cập nhật:", errList);
+          // fallback: vẫn gọi onSave undefined để parent tự xử lý
+          onSave();
+        }
         onClose();
       } else {
-        message.error(res?.message || "Không thể cập nhật người dùng!");
+        if (typeof onError === "function")
+          onError(res?.message || "Cập nhật người dùng thất bại!");
       }
     } catch (err) {
       console.error("Lỗi khi cập nhật người dùng:", err);
-      message.error("Cập nhật thất bại, vui lòng thử lại!");
+      if (typeof onError === "function")
+        onError(err?.message || "Cập nhật thất bại. Vui lòng thử lại!");
     } finally {
       setLoading(false);
     }

@@ -1,47 +1,90 @@
-import { useState } from "react";
-import { Plus, Search, Zap, Pencil, Trash2 } from "lucide-react";
-import { mockWorkSchedules, mockDoctors } from "@/data/mockData";
+import { useState, useEffect } from "react";
+import { Plus, Search, Zap } from "lucide-react";
 import SchedulesTable from "@/pages/admin/WorkSchedules/components/SchedulesTable";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import WorkScheduleFormModal from "@/pages/admin/WorkSchedules/components/WorkScheduleFormModal";
 import GenerateSlotsModal from "@/pages/admin/WorkSchedules/components/GenerateSlotsModal";
+import { WorkScheduleService } from "@/service/work_shedule/work_shedule.service";
+import { useNavigate, useLocation } from "react-router-dom";
+import { message } from "antd";
 
 const WorkSchedulesPage = () => {
-  const [schedules, setSchedules] = useState(mockWorkSchedules);
+  const [schedules, setSchedules] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSlotGenerateModalOpen, setIsSlotGenerateModalOpen] = useState(false);
-  const [selectedSchedule, setSelectedSchedule] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [doctorFilter, setDoctorFilter] = useState("all");
+  const [searchInput, setSearchInput] = useState(""); // giá trị người dùng nhập
+  const [searchTerm, setSearchTerm] = useState(""); // giá trị dùng để fetch
   const [activeTab, setActiveTab] = useState("new");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const filteredSchedules = schedules.filter((schedule) => {
-    const matchesSearch = schedule.doctorName
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesDoctor =
-      doctorFilter === "all" || schedule.doctorId === doctorFilter;
-    const matchesTab =
-      activeTab === "new" ? schedule.type === "new" : schedule.type === "old";
-    return matchesSearch && matchesDoctor && matchesTab;
-  });
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [messageApi, contextHolder] = message.useMessage();
 
-  const handleEdit = (schedule) => {
-    setSelectedSchedule(schedule);
-    setIsEditModalOpen(true);
+  // 🧭 Đọc search param từ URL khi load trang
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const search = params.get("search") || "";
+    setSearchInput(search);
+    setSearchTerm(search);
+  }, [location.search]);
+
+  // ✅ Đưa hàm fetchSchedules ra ngoài useEffect để tái sử dụng
+  const fetchSchedules = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      let res;
+      if (activeTab === "new") {
+        res = await WorkScheduleService.getNewWorkSchedules();
+      } else {
+        res = await WorkScheduleService.getOldWorkSchedules();
+      }
+
+      let formatted = res.data.map((doctor, index) => ({
+        id: `SCH${String(index + 1).padStart(3, "0")}`,
+        doctorId: doctor.doctor_id,
+        doctorName: doctor.fullname,
+        slotDuration: doctor.work_schedules[0]?.slot_duration ?? "-",
+        effectiveDate: doctor.work_schedules[0]?.effective_date ?? "-",
+        expireDate: doctor.work_schedules[0]?.expire_date ?? "-",
+        status: "Hiệu lực",
+        workDays: doctor.work_schedules.map((ws) => ({
+          dayOfWeek: ws.day_of_week,
+          startTime: ws.start_time,
+          endTime: ws.end_time,
+          note: ws.note,
+        })),
+      }));
+
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        formatted = formatted.filter((s) =>
+          s.doctorName.toLowerCase().includes(term)
+        );
+      }
+
+      setSchedules(formatted);
+    } catch (err) {
+      console.error("Lỗi khi tải lịch làm việc:", err);
+      setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGenerateSlots = (schedule) => {
-    setSelectedSchedule(schedule);
-    setIsSlotGenerateModalOpen(true);
+  // 🧭 Gọi API mỗi khi đổi tab hoặc bấm tìm kiếm
+  useEffect(() => {
+    fetchSchedules();
+  }, [activeTab, searchTerm]);
+
+  // ✅ Xử lý bấm nút tìm kiếm
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchInput) params.set("search", searchInput);
+    navigate({ search: params.toString() }); // cập nhật URL
+    setSearchTerm(searchInput); // trigger gọi API
   };
 
   return (
@@ -58,13 +101,15 @@ const WorkSchedulesPage = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => setIsSlotGenerateModalOpen(true)}
-              className="flex cursor-pointer items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
-            >
-              <Zap className="h-5 w-5" />
-              Chia slot khám {activeTab === "new" ? `(lịch mới)` : `(lịch cũ)`}
-            </button>
+            {activeTab === "new" && (
+              <button
+                onClick={() => setIsSlotGenerateModalOpen(true)}
+                className="flex cursor-pointer items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
+              >
+                <Zap className="h-5 w-5" />
+                Chia slot khám (lịch mới)
+              </button>
+            )}
             <button
               onClick={() => setIsAddModalOpen(true)}
               className="flex cursor-pointer items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
@@ -77,19 +122,23 @@ const WorkSchedulesPage = () => {
 
         {/* Filters */}
         <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Tìm kiếm theo bác sĩ..."
-                  className="px-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+          <div className="flex flex-col gap-4 md:flex-row items-center">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Nhập tên bác sĩ..."
+                className="px-10"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
             </div>
+            <button
+              onClick={handleSearch}
+              className="mt-2 md:mt-0 rounded-lg bg-emerald-600 px-6 py-2 text-white hover:bg-emerald-700"
+            >
+              Tìm kiếm
+            </button>
           </div>
         </div>
 
@@ -113,27 +162,31 @@ const WorkSchedulesPage = () => {
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
-            Lịch làm việc cũ
+            Lịch làm việc hiện tại
           </button>
         </div>
 
-        {/* Work Schedules Table */}
-        <SchedulesTable
-          filteredSchedules={filteredSchedules}
-          activeTab={activeTab}
-        />
+        {/* Loading / Error / Table */}
+        {loading ? (
+          <p className="text-center text-gray-500 mt-10">Đang tải dữ liệu...</p>
+        ) : error ? (
+          <p className="text-center text-red-500 mt-10">{error}</p>
+        ) : (
+          <SchedulesTable filteredSchedules={schedules} activeTab={activeTab} />
+        )}
 
         {/* Add Modal */}
         {isAddModalOpen && (
           <WorkScheduleFormModal
             onClose={() => setIsAddModalOpen(false)}
-            onSave={(newSchedule) => {
-              setSchedules([
-                ...schedules,
-                { ...newSchedule, id: `SCH${schedules.length + 1}` },
-              ]);
+            onSave={(updatedData, successMessage) => {
+              if (successMessage) messageApi.success(successMessage);
+              if (updatedData) setSchedules(updatedData);
+              else fetchSchedules();
               setIsAddModalOpen(false);
             }}
+            onError={(msg) => messageApi.error(msg)}
+            onSuccess={(msg) => messageApi.success(msg)}
           />
         )}
 
@@ -141,8 +194,12 @@ const WorkSchedulesPage = () => {
         {isSlotGenerateModalOpen && (
           <GenerateSlotsModal
             onClose={() => setIsSlotGenerateModalOpen(false)}
+            activeTab={activeTab}
+            onSuccess={(msg) => messageApi.success(msg)}
+            onError={(msg) => messageApi.error(msg)}
           />
         )}
+        {contextHolder}
       </div>
     </div>
   );

@@ -34,6 +34,7 @@ const DoctorFormModal = ({ doctor, onClose, onSave }) => {
   const [specialties, setSpecialties] = useState([]);
   const [loading, setLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(formData.avatar_url);
+  const [messageApi, contextHolder] = message.useMessage();
 
   // ===============================
   // FETCH CHUYÊN KHOA
@@ -45,7 +46,7 @@ const DoctorFormModal = ({ doctor, onClose, onSave }) => {
       setSpecialties(data);
     } catch (err) {
       console.error("Lỗi khi tải danh sách chuyên khoa:", err);
-      message.error("Không thể tải danh sách chuyên khoa!");
+      messageApi.error("Tải danh sách chuyên khoa thất bại!");
     } finally {
       setLoading(false);
     }
@@ -58,16 +59,85 @@ const DoctorFormModal = ({ doctor, onClose, onSave }) => {
   // ===============================
   // UPLOAD ẢNH (tạm thời lưu base64)
   // ===============================
-  const handleImageUpload = (e) => {
+  // Compress image client-side to avoid sending huge base64 payloads
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setAvatarPreview(event.target.result);
-      setFormData({ ...formData, avatar_url: event.target.result });
+    const toDataURL = (img, mime = "image/jpeg", quality = 0.8) => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      let { width, height } = img;
+
+      const maxDim = 800; // max width or height
+      if (width > maxDim || height > maxDim) {
+        const scale = Math.min(maxDim / width, maxDim / height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+      return canvas.toDataURL(mime, quality);
     };
-    reader.readAsDataURL(file);
+
+    const readFile = (file) =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+    try {
+      const dataUrl = await readFile(file);
+
+      // Create image element to get natural size
+      const img = await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = dataUrl;
+      });
+
+      // Try compressing to jpeg first
+      let compressed = toDataURL(img, "image/jpeg", 0.8);
+
+      // If still large, progressively reduce quality
+      const maxSizeBytes = 100 * 1024; // target ~100KB
+      const approxSize = (str) => Math.ceil((str.length - (str.indexOf(',') + 1)) * 3 / 4);
+
+      let size = approxSize(compressed);
+      let quality = 0.8;
+      while (size > maxSizeBytes && quality > 0.2) {
+        quality -= 0.15;
+        compressed = toDataURL(img, "image/jpeg", quality);
+        size = approxSize(compressed);
+      }
+
+      // If still too large and original was PNG, try png but resized (less likely smaller)
+      if (size > maxSizeBytes && file.type === "image/png") {
+        compressed = toDataURL(img, "image/png", 1);
+        size = approxSize(compressed);
+      }
+
+      // Fallback to original dataUrl if compression failed
+      const finalDataUrl = size <= (10 * 1024 * 1024) ? compressed : dataUrl;
+
+      setAvatarPreview(finalDataUrl);
+      setFormData({ ...formData, avatar_url: finalDataUrl });
+    } catch (err) {
+      console.error("Lỗi khi xử lý ảnh:", err);
+      // fallback: read and set original
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAvatarPreview(event.target.result);
+        setFormData({ ...formData, avatar_url: event.target.result });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // ===============================
@@ -78,18 +148,28 @@ const DoctorFormModal = ({ doctor, onClose, onSave }) => {
     try {
       setLoading(true);
 
+      let successMsg = null;
       if (isEdit) {
         await DoctorService.update(doctor.doctor_id, formData);
-        message.success("Cập nhật thông tin bác sĩ thành công!");
+        successMsg = "Cập nhật thông tin bác sĩ thành công!";
       } else {
         await DoctorService.create(formData);
-        message.success("Thêm bác sĩ mới thành công!");
+        console.log("Form Data Submitted:", formData);
+        successMsg = "Thêm mới bác sĩ thành công!";
       }
 
-      onSave();
+      // Lấy lại danh sách bác sĩ và trả về cho parent (Plan A).
+      // Trả kèm `successMsg` để parent hiển thị message (parent có contextHolder và sẽ không bị unmount ngay).
+      try {
+        const data = await DoctorService.getAll();
+        onSave?.(data?.doctors || [], successMsg);
+      } catch (errList) {
+        console.error("Lỗi khi tải lại danh sách bác sĩ:", errList);
+        onSave?.([], successMsg);
+      }
     } catch (err) {
       console.error("Lỗi khi lưu thông tin bác sĩ:", err);
-      message.error("Không thể lưu thông tin bác sĩ!");
+      messageApi.error("Lưu thông tin bác sĩ thất bại. Vui lòng thử lại!");
     } finally {
       setLoading(false);
     }
@@ -106,6 +186,7 @@ const DoctorFormModal = ({ doctor, onClose, onSave }) => {
           "color-mix(in oklab, var(--color-black) 50%, transparent)",
       }}
     >
+      {contextHolder}
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6">
         <h2 className="mb-4 text-xl font-bold">
           {isEdit ? "Chỉnh sửa bác sĩ" : "Thêm bác sĩ mới"}
@@ -186,7 +267,11 @@ const DoctorFormModal = ({ doctor, onClose, onSave }) => {
                 Chuyên khoa <Asterisk size={12} className="text-red-500" />
               </Label>
               <Select
-                value={formData.specialization_id}
+                value={
+                  formData.specialization_id
+                    ? String(formData.specialization_id)
+                    : ""
+                }
                 onValueChange={(v) =>
                   setFormData({ ...formData, specialization_id: Number(v) })
                 }
@@ -333,5 +418,4 @@ const DoctorFormModal = ({ doctor, onClose, onSave }) => {
     </div>
   );
 };
-
 export default DoctorFormModal;

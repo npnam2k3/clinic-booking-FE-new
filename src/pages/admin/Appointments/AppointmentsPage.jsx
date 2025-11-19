@@ -37,6 +37,7 @@ const AppointmentsPage = () => {
   const initialKeyword = searchParams.get("keyword") || "";
   const [searchInput, setSearchInput] = useState(initialKeyword);
   const [searchTerm, setSearchTerm] = useState(initialKeyword);
+  const [messageApi, contextHolder] = message.useMessage();
 
   // ===============================
   // FETCH DANH SÁCH CUỘC HẸN
@@ -49,7 +50,7 @@ const AppointmentsPage = () => {
       setAppointments(data.appointments || []);
     } catch (err) {
       console.error("Lỗi khi tải danh sách cuộc hẹn:", err);
-      message.error("Không thể tải danh sách cuộc hẹn!");
+      messageApi.error("Tải danh sách cuộc hẹn thất bại!");
     } finally {
       setLoading(false);
     }
@@ -116,11 +117,11 @@ const AppointmentsPage = () => {
         setSelectedAppointment(data);
         setIsDetailModalOpen(true);
       } else {
-        message.error("Không thể xem chi tiết cuộc hẹn!");
+        messageApi.error("Không thể xem chi tiết cuộc hẹn!");
       }
     } catch (err) {
       console.error("Lỗi khi lấy chi tiết:", err);
-      message.error("Không thể lấy chi tiết cuộc hẹn!");
+      messageApi.error("Lấy chi tiết cuộc hẹn thất bại!");
     } finally {
       setLoading(false);
     }
@@ -129,33 +130,21 @@ const AppointmentsPage = () => {
   // ===============================
   // HỦY CUỘC HẸN
   // ===============================
+  // ===============================
+  // HỦY CUỘC HẸN
+  // ===============================
   const handleCancel = (apt) => {
     setSelectedAppointment(apt);
     setIsCancelModalOpen(true);
   };
 
-  const handleConfirmCancel = async (cancelReason) => {
-    try {
-      setLoading(true);
-      const res = await AppointmentService.cancel(
-        selectedAppointment.appointment_id,
-        cancelReason
-      );
-
-      if (res.status) {
-        message.success("Đã hủy lịch khám thành công!");
-        fetchAppointments();
-      } else {
-        message.error(res.message || "Không thể hủy lịch khám!");
-      }
-    } catch (err) {
-      console.error("Lỗi khi hủy lịch:", err);
-      message.error("Không thể hủy lịch khám!");
-    } finally {
-      setLoading(false);
-      setIsCancelModalOpen(false);
-      setSelectedAppointment(null);
-    }
+  // Khi modal trả về danh sách cập nhật, cập nhật state ở trang này
+  const handleConfirmCancel = (updatedAppointments, successMessage) => {
+    if (successMessage) messageApi.success(successMessage);
+    if (updatedAppointments) setAppointments(updatedAppointments);
+    else fetchAppointments();
+    setIsCancelModalOpen(false);
+    setSelectedAppointment(null);
   };
 
   // ===============================
@@ -163,6 +152,7 @@ const AppointmentsPage = () => {
   // ===============================
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      {contextHolder}
       <div className="mx-auto max-w-7xl">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">
           Quản lý lịch khám
@@ -251,11 +241,11 @@ const AppointmentsPage = () => {
               setSelectedAppointment(null);
             }}
             onConfirm={handleConfirmCancel}
+            onError={(msg) => messageApi.error(msg)}
           />
         )}
       </div>
     </div>
   );
 };
-
 export default AppointmentsPage;
