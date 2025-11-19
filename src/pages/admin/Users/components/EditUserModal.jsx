@@ -2,11 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { message } from "antd";
 import { StaffService } from "@/service/staff/staff.service";
 import { UserService } from "@/service/user/user.service";
 
-const EditUserModal = ({ user, onClose, onSave }) => {
+const EditUserModal = ({ user, onClose, onSave, onError }) => {
   const [formData, setFormData] = useState({
     fullname: user?.contact?.fullname || "",
     phone_number: user?.contact?.phone_number || "",
@@ -15,7 +14,6 @@ const EditUserModal = ({ user, onClose, onSave }) => {
     user_id: user?.user_id,
     role: user?.role?.role_name || "USER_CLIENT",
   });
-  const [messageApi, contextHolder] = message.useMessage();
 
   const [loading, setLoading] = useState(false);
 
@@ -38,15 +36,20 @@ const EditUserModal = ({ user, onClose, onSave }) => {
         : await UserService.update(formData.user_id, payload);
 
       if (res?.status) {
-        messageApi.success("Cập nhật thông tin người dùng thành công!");
         // Sau khi cập nhật thành công, gọi lại API list tương ứng và trả về dữ liệu mới cho parent
         try {
           if (isStaff) {
             const list = await StaffService.getAll();
-            onSave(list || []);
+            onSave({
+              data: list || [],
+              message: "Cập nhật thông tin người dùng thành công!",
+            });
           } else {
             const data = await UserService.getAll();
-            onSave(data?.users || []);
+            onSave({
+              data: data?.users || [],
+              message: "Cập nhật thông tin người dùng thành công!",
+            });
           }
         } catch (errList) {
           console.error("Lỗi khi tải lại danh sách sau cập nhật:", errList);
@@ -55,11 +58,13 @@ const EditUserModal = ({ user, onClose, onSave }) => {
         }
         onClose();
       } else {
-        messageApi.error(res?.message || "Cập nhật người dùng thất bại!");
+        if (typeof onError === "function")
+          onError(res?.message || "Cập nhật người dùng thất bại!");
       }
     } catch (err) {
       console.error("Lỗi khi cập nhật người dùng:", err);
-      messageApi.error("Cập nhật thất bại. Vui lòng thử lại!");
+      if (typeof onError === "function")
+        onError(err?.message || "Cập nhật thất bại. Vui lòng thử lại!");
     } finally {
       setLoading(false);
     }
@@ -67,7 +72,6 @@ const EditUserModal = ({ user, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-      {contextHolder}
       <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-lg">
         <h2 className="text-xl font-bold mb-4 text-gray-900">
           Chỉnh sửa thông tin người dùng

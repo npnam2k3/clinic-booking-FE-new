@@ -33,10 +33,12 @@ export function UserAvatarMenu() {
   useEffect(() => {
     const tokenInfo = storage.getTokenInfo();
     try {
-      const info =
+      const infoRaw =
         typeof tokenInfo === "string" ? JSON.parse(tokenInfo) : tokenInfo;
-      setUserInfo(info);
-      const role = info?.role?.role_name || null;
+      // support either shape: { data: { ...profile } } or direct profile object
+      const profile = infoRaw?.data ?? infoRaw ?? null;
+      setUserInfo(profile);
+      const role = profile?.role?.role_name || null;
       setIsAdminOrStaff(role === "ADMIN" || role === "STAFF");
     } catch (e) {
       console.error("Không thể đọc token info:", e);
@@ -62,7 +64,7 @@ export function UserAvatarMenu() {
     setShowLogoutDialog(false);
     handleLogout();
   };
-
+  console.log("123412312132123123312123123132123", userInfo);
   const cancelLogout = () => {
     setShowLogoutDialog(false);
   };
@@ -94,7 +96,7 @@ export function UserAvatarMenu() {
             <>
               <div className="px-2 py-2">
                 <p className="text-sm font-medium">
-                  {userInfo?.fullname || "Admin"}
+                  {userInfo?.contact?.fullname || userInfo?.fullname || "Admin"}
                 </p>
                 <p className="text-xs text-gray-500">
                   {userInfo?.role?.role_name || "ADMIN"}

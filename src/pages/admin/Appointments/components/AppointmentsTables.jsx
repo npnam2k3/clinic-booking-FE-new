@@ -32,16 +32,23 @@ const AppointmentsTables = ({
             </tr>
           </thead>
           <tbody>
-            {appointments.map((apt) => {
+            {(appointments || []).map((apt) => {
               const badge = getStatusBadge(apt.status);
               return (
                 <tr key={apt.id} className="border-b last:border-0">
-                  <td className="p-4 text-sm">{apt.doctor_slot.slot_id}</td>
-                  <td className="p-4 text-sm">{apt.patient.fullname}</td>
-                  {/* <td className="p-4 text-sm">{apt.doctorName}</td> */}
-                  <td className="p-4 text-sm">{apt.doctor_slot.slot_date}</td>
                   <td className="p-4 text-sm">
-                    {apt.doctor_slot.start_at} - {apt.doctor_slot.end_at}
+                    {apt.doctor_slot?.slot_id ?? "-"}
+                  </td>
+                  <td className="p-4 text-sm">
+                    {apt.patient?.fullname ?? "-"}
+                  </td>
+                  {/* <td className="p-4 text-sm">{apt.doctorName}</td> */}
+                  <td className="p-4 text-sm">
+                    {apt.doctor_slot?.slot_date ?? "-"}
+                  </td>
+                  <td className="p-4 text-sm">
+                    {apt.doctor_slot?.start_at ?? "-"} -{" "}
+                    {apt.doctor_slot?.end_at ?? "-"}
                   </td>
                   <td className="p-4 text-sm">
                     <div className="relative">

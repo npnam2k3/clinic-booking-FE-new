@@ -12,12 +12,15 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
-import { message } from "antd";
-
-const WorkScheduleFormModal = ({ schedule, onClose, onSave }) => {
+const WorkScheduleFormModal = ({
+  schedule,
+  onClose,
+  onSave,
+  onError,
+  onSuccess,
+}) => {
   const [loading, setLoading] = useState(false);
   const [doctors, setDoctors] = useState([]);
-  const [messageApi, contextHolder] = message.useMessage();
 
   const [formData, setFormData] = useState(
     schedule || {
@@ -44,7 +47,7 @@ const WorkScheduleFormModal = ({ schedule, onClose, onSave }) => {
         setDoctors(res.doctors);
       } catch (err) {
         console.error("Lỗi khi tải danh sách bác sĩ:", err);
-        messageApi.error("Tải danh sách bác sĩ thất bại!");
+        onError?.("Tải danh sách bác sĩ thất bại!");
       }
     };
     fetchDoctors();
@@ -53,7 +56,7 @@ const WorkScheduleFormModal = ({ schedule, onClose, onSave }) => {
   // ➕ Thêm ngày làm việc
   const handleAddDay = () => {
     if (!dayEntry.dayOfWeek || !dayEntry.startTime || !dayEntry.endTime) {
-      messageApi.error("Vui lòng chọn đầy đủ thông tin ngày làm việc!");
+      onError?.("Vui lòng chọn đầy đủ thông tin ngày làm việc!");
       return;
     }
 
@@ -61,7 +64,7 @@ const WorkScheduleFormModal = ({ schedule, onClose, onSave }) => {
       (d) => d.dayOfWeek === dayEntry.dayOfWeek
     );
     if (exists) {
-      messageApi.warning("Ngày làm việc này đã tồn tại!");
+      onError?.("Ngày làm việc này đã tồn tại!");
       return;
     }
 
@@ -71,7 +74,7 @@ const WorkScheduleFormModal = ({ schedule, onClose, onSave }) => {
     });
 
     setDayEntry({ dayOfWeek: "", startTime: "", endTime: "", note: "" });
-    messageApi.success("Đã thêm ngày làm việc!");
+    onSuccess?.("Đã thêm ngày làm việc!");
   };
 
   // ❌ Xóa ngày làm việc
@@ -112,11 +115,11 @@ const WorkScheduleFormModal = ({ schedule, onClose, onSave }) => {
       const res = await WorkScheduleService.create(payload);
 
       if (!res.status || res.statusCode >= 400) {
-        messageApi.error(res.message || "Tạo lịch làm việc thất bại!");
+        onError?.(res.message || "Tạo lịch làm việc thất bại!");
         return;
       }
 
-      messageApi.success(res.message || "Tạo lịch làm việc thành công!");
+      onSuccess?.(res.message || "Tạo lịch làm việc thành công!");
       // Lấy lại danh sách lịch (lịch mới) và trả về cho parent theo định dạng giống trang
       try {
         const listRes = await WorkScheduleService.getNewWorkSchedules();
@@ -146,9 +149,9 @@ const WorkScheduleFormModal = ({ schedule, onClose, onSave }) => {
     } catch (error) {
       const backendMsg = error?.response?.data?.message;
       if (backendMsg) {
-        messageApi.error(backendMsg);
+        onError?.(backendMsg);
       } else {
-        messageApi.error("Đã xảy ra lỗi, vui lòng thử lại!");
+        onError?.("Đã xảy ra lỗi, vui lòng thử lại!");
       }
     } finally {
       setLoading(false);
@@ -187,7 +190,7 @@ const WorkScheduleFormModal = ({ schedule, onClose, onSave }) => {
           "color-mix(in oklab, var(--color-black) 50%, transparent)",
       }}
     >
-      {contextHolder}
+      {/* parent displays messages via messageApi */}
       <div className="w-full max-w-3xl rounded-lg bg-white p-6 max-h-[90vh] overflow-y-auto shadow-lg">
         <h2 className="mb-4 text-xl font-bold">
           {schedule ? "Chỉnh sửa lịch làm việc" : "Thêm lịch làm việc mới"}

@@ -5,6 +5,14 @@ import SpecialtyFormModal from "@/pages/admin/Specialties/components/SpecialtyFo
 import SpecialtiesTable from "@/pages/admin/Specialties/components/SpecialtiesTable";
 import { SpecialtyService } from "@/service/specialty/specialty.service";
 import { message } from "antd";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useSearchParams } from "react-router-dom"; // ✅ để đọc/ghi query trên URL
 
 const SpecialtiesPage = () => {
@@ -57,21 +65,35 @@ const SpecialtiesPage = () => {
   };
 
   // ❌ Xóa
-  const handleDelete = async (specialtyId) => {
-    if (confirm("Bạn có chắc chắn muốn xóa chuyên khoa này?")) {
-      try {
-        await SpecialtyService.delete(specialtyId);
-        messageApi.success("Xóa chuyên khoa thành công!");
-        fetchSpecialties(); // reload danh sách
-      } catch (err) {
-        console.error("Lỗi khi xóa chuyên khoa:", err);
-        messageApi.error("Xóa chuyên khoa thất bại. Vui lòng thử lại!");
-      }
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const handleDelete = (specialtyId, specialtyName) => {
+    setDeleteTarget({ id: specialtyId, name: specialtyName });
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await SpecialtyService.delete(deleteTarget.id);
+      messageApi.success("Xóa chuyên khoa thành công!");
+      fetchSpecialties(); // reload danh sách
+    } catch (err) {
+      console.error("Lỗi khi xóa chuyên khoa:", err);
+      messageApi.error("Xóa chuyên khoa thất bại. Vui lòng thử lại!");
+    } finally {
+      setShowDeleteDialog(false);
+      setDeleteTarget(null);
     }
   };
 
-  // ✅ Sau khi thêm hoặc sửa (nhận dữ liệu cập nhật từ modal nếu có)
-  const handleAfterSave = (updatedData) => {
+  // ✅ Sau khi thêm hoặc sửa (nhận dữ liệu cập nhật và thông báo từ modal nếu có)
+  const handleAfterSave = (updatedData, successMessage) => {
+    if (successMessage) {
+      messageApi.success(successMessage);
+    }
+
     if (updatedData) setSpecialties(updatedData);
     else fetchSpecialties();
   };
@@ -192,6 +214,32 @@ const SpecialtiesPage = () => {
             onSave={handleAfterSave}
           />
         )}
+        {/* Delete confirmation dialog */}
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Xác nhận xóa chuyên khoa</DialogTitle>
+              <DialogDescription>
+                Bạn có chắc chắn muốn xóa chuyên khoa "{deleteTarget?.name}"
+                không?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <button
+                className="rounded-lg cursor-pointer border border-gray-300 px-4 py-2 hover:bg-gray-50"
+                onClick={() => setShowDeleteDialog(false)}
+              >
+                Hủy
+              </button>
+              <button
+                className="rounded-lg cursor-pointer bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                onClick={confirmDelete}
+              >
+                Xóa
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

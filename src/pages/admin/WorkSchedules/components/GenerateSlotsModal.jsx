@@ -10,13 +10,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Asterisk, Info } from "lucide-react";
-import { message } from "antd";
 import { DoctorService } from "@/service/doctor/useDoctor.service";
 import { DoctorSlotsService } from "@/service/doctor_slot/useDoctorSlot.service";
 import { WorkScheduleService } from "@/service/work_shedule/work_shedule.service";
 import { validateDoctorSlotsRequest } from "@/untils/vaildate/doctor-slots.validate";
 
-const GenerateSlotsModal = ({ onClose, activeTab }) => {
+const GenerateSlotsModal = ({ onClose, activeTab, onSuccess, onError }) => {
   const [formData, setFormData] = useState({
     doctorId: "",
     dateFrom: "",
@@ -25,7 +24,7 @@ const GenerateSlotsModal = ({ onClose, activeTab }) => {
   const [loading, setLoading] = useState(false);
   const [doctors, setDoctors] = useState([]);
   const [scheduleInfo, setScheduleInfo] = useState(null); // ✅ lưu thông tin lịch làm việc
-  const [messageApi, contextHolder] = message.useMessage();
+  // parent will display messages via onSuccess/onError
 
   // 🩺 Lấy danh sách bác sĩ
   useEffect(() => {
@@ -35,7 +34,7 @@ const GenerateSlotsModal = ({ onClose, activeTab }) => {
         setDoctors(res?.doctors || res || []);
       } catch (err) {
         console.error("Lỗi khi tải danh sách bác sĩ:", err);
-        messageApi.error("Tải danh sách bác sĩ thất bại!");
+        onError?.("Tải danh sách bác sĩ thất bại!");
       }
     };
     fetchDoctors();
@@ -129,7 +128,7 @@ const GenerateSlotsModal = ({ onClose, activeTab }) => {
 
     const error = validateDoctorSlotsRequest(payload);
     if (error) {
-      messageApi.error(error);
+      onError?.(error);
       return;
     }
 
@@ -138,19 +137,17 @@ const GenerateSlotsModal = ({ onClose, activeTab }) => {
       const res = await DoctorSlotsService.getDoctorSlots(payload);
 
       if (res.status === false || res.statusCode >= 400) {
-        messageApi.error(res.message || "Tạo slots thất bại!");
+        onError?.(res.message || "Tạo slots thất bại!");
         return;
       }
 
-      messageApi.success(res.message || "Tạo slot khám thành công!");
+      onSuccess?.(res.message || "Tạo slot khám thành công!");
       console.log("Kết quả tạo slots:", res.data);
       onClose();
     } catch (err) {
       console.error("Lỗi khi tạo slots:", err);
       const backendMsg = err?.response?.data?.message;
-      messageApi.error(
-        backendMsg || "Tạo slot khám thất bại. Vui lòng thử lại!"
-      );
+      onError?.(backendMsg || "Tạo slot khám thất bại. Vui lòng thử lại!");
     } finally {
       setLoading(false);
     }
@@ -164,7 +161,7 @@ const GenerateSlotsModal = ({ onClose, activeTab }) => {
           "color-mix(in oklab, var(--color-black) 50%, transparent)",
       }}
     >
-      {contextHolder}
+      {/* parent renders message contextHolder */}
       <div className="w-full max-w-2xl rounded-lg bg-white p-6">
         <h2 className="mb-4 text-2xl font-bold">
           Chia slot khám từ lịch làm việc

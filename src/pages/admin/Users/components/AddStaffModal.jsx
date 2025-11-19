@@ -10,13 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Asterisk } from "lucide-react";
 import { useState } from "react";
-import { message } from "antd";
 import { StaffService } from "@/service/staff/staff.service";
 
-export default function AddStaffModal({ onClose, onSave }) {
+export default function AddStaffModal({ onClose, onSave, onError }) {
   // Trạng thái hiển thị mật khẩu
   const [showPassword, setShowPassword] = useState(false);
-  const [messageApi, contextHolder] = message.useMessage();
 
   // Dữ liệu form
   const [formData, setFormData] = useState({
@@ -52,22 +50,26 @@ export default function AddStaffModal({ onClose, onSave }) {
       });
 
       if (res.status) {
-        messageApi.success("Thêm mới nhân viên thành công!");
         // Lấy lại danh sách nhân viên và trả về cho parent
         try {
           const list = await StaffService.getAll();
-          onSave(list || []);
+          onSave({
+            data: list || [],
+            message: "Thêm mới nhân viên thành công!",
+          });
         } catch (errList) {
           console.error("Lỗi khi tải lại danh sách nhân viên:", errList);
           onSave();
         }
         onClose(); // Đóng modal
       } else {
-        messageApi.error(res.message || "Thêm nhân viên thất bại!");
+        if (typeof onError === "function")
+          onError(res.message || "Thêm nhân viên thất bại!");
       }
     } catch (err) {
       console.error("Lỗi khi tạo nhân viên:", err);
-      messageApi.error(err.message || "Thêm nhân viên thất bại!");
+      if (typeof onError === "function")
+        onError(err?.message || "Thêm nhân viên thất bại!");
     } finally {
       setLoading(false);
     }
@@ -75,7 +77,6 @@ export default function AddStaffModal({ onClose, onSave }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      {contextHolder}
       <DialogContent className="max-w-[500px] max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold">

@@ -16,7 +16,8 @@ export function SuccessDialog({ open, onOpenChange }) {
           <CheckCircle2 className="mx-auto mb-4 text-green-600" size={48} />
           <h2 className="text-2xl font-bold">Thành công!</h2>
           <p className="text-gray-700 mt-2">
-            Lịch khám của bạn đã được đặt thành công.
+            Bạn đã đặt lịch thành công. Chúng tôi đã gửi email xác nhận cho bạn.
+            Vui lòng kiểm tra email.
           </p>
 
           <Button

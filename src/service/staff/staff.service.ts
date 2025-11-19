@@ -40,17 +40,13 @@ export const StaffService = {
       is_block: boolean;
     }>
   ): Promise<ApiResponse<StaffDto>> {
-    const res = await authorizedRequest(
-      "patch",
-      `${BASE_URL}/${userId}`,
-      payload
-    );
+    const res = await authorizedRequest("patch", `users/${userId}`, payload);
     return res.data;
   },
 
   // Xóa nhân viên
   async delete(userId: number): Promise<ApiResponse> {
-    const res = await authorizedRequest("delete", `${BASE_URL}/${userId}`);
+    const res = await authorizedRequest("delete", `users/${userId}`);
     return res.data;
   },
 };

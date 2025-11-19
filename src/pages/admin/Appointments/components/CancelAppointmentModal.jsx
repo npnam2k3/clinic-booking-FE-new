@@ -10,14 +10,18 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
-import { message } from "antd";
 import { AppointmentService } from "@/service/appointment/appointment.service";
 
-const CancelAppointmentModal = ({ appointment, onClose, onConfirm }) => {
+const CancelAppointmentModal = ({
+  appointment,
+  onClose,
+  onConfirm,
+  onError,
+}) => {
   const [cancelBy, setCancelBy] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [note, setNote] = useState("");
-  const [messageApi, contextHolder] = message.useMessage();
+  // messages are delegated to parent via onConfirm/onError so toasts remain visible
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,21 +34,39 @@ const CancelAppointmentModal = ({ appointment, onClose, onConfirm }) => {
       });
 
       if (res?.status) {
-        messageApi.success("Hủy lịch khám thành công!");
-        // Lấy lại danh sách cuộc hẹn và trả về cho parent
+        // Lấy lại danh sách cuộc hẹn và trả về cho parent (kèm message)
         try {
           const data = await AppointmentService.getAll();
-          onConfirm?.(data?.appointments || []);
+          onConfirm?.(data?.appointments || [], "Hủy lịch khám thành công!");
         } catch (fetchErr) {
           console.error("Lỗi khi tải lại danh sách cuộc hẹn:", fetchErr);
-          onConfirm?.();
+          // nếu fetch lại thất bại thì để parent tự fetch và vẫn hiện message
+          onConfirm?.(null, "Hủy lịch khám thành công!");
         }
       } else {
-        messageApi.error(res?.message || "Hủy lịch khám thất bại!");
+        // Try to extract detailed errors from response
+        const detail = res?.detail;
+        let errMsg = res?.message || "Hủy lịch khám thất bại!";
+        if (Array.isArray(detail) && detail.length > 0) {
+          errMsg = detail
+            .map((d) =>
+              d?.message ? d.message : `${d?.field || ""}: ${JSON.stringify(d)}`
+            )
+            .join("; ");
+        } else if (
+          detail &&
+          typeof detail === "object" &&
+          Object.keys(detail).length > 0
+        ) {
+          if (detail.message) errMsg = detail.message;
+          else errMsg = Object.values(detail).join("; ");
+        }
+        onError?.(errMsg);
       }
     } catch (err) {
       console.error("Lỗi khi hủy lịch:", err);
-      messageApi.error("Hủy lịch khám thất bại. Vui lòng thử lại!");
+      const apiMsg = err?.response?.data?.message || err?.message;
+      onError?.(apiMsg || "Hủy lịch khám thất bại. Vui lòng thử lại!");
       onConfirm?.();
     } finally {
       onClose();
@@ -85,7 +107,6 @@ const CancelAppointmentModal = ({ appointment, onClose, onConfirm }) => {
           </p>
         </div>
 
-
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Người hủy */}
           <div className="space-y-1">
@@ -118,11 +139,17 @@ const CancelAppointmentModal = ({ appointment, onClose, onConfirm }) => {
                 <SelectValue placeholder="Chọn lý do" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="REQUESTED_BY_CUSTOMER">Bệnh nhân yêu cầu hủy</SelectItem>
+                <SelectItem value="REQUESTED_BY_CUSTOMER">
+                  Bệnh nhân yêu cầu hủy
+                </SelectItem>
                 <SelectItem value="NO_SHOW">Không đến khám</SelectItem>
                 <SelectItem value="DOCTOR_OFF">Bác sĩ nghỉ</SelectItem>
-                <SelectItem value="CLINIC_RESCHEDULE">Phòng khám đổi lịch</SelectItem>
-                <SelectItem value="AUTO_EXPIRED">Tự động hủy (hết hạn)</SelectItem>
+                <SelectItem value="CLINIC_RESCHEDULE">
+                  Phòng khám đổi lịch
+                </SelectItem>
+                <SelectItem value="AUTO_EXPIRED">
+                  Tự động hủy (hết hạn)
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

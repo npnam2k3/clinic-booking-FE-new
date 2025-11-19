@@ -5,7 +5,7 @@ import { SpecialtyService } from "@/service/specialty/specialty.service";
 import { message } from "antd";
 
 const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
-  const [messageApi, contextHolder] = message.useMessage();
+  // use global message so parent can render success messages reliably
   const [formData, setFormData] = useState(
     specialty || {
       name: "",
@@ -20,7 +20,7 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
 
     try {
       if (!formData.name.trim()) {
-        messageApi.warning("Vui lòng nhập tên chuyên khoa!");
+        message.warning("Vui lòng nhập tên chuyên khoa!");
         setLoading(false);
         return;
       }
@@ -31,14 +31,12 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
           specialization_name: formData.name,
           description: formData.description,
         });
-        messageApi.success("Cập nhật chuyên khoa thành công!");
       } else {
         // Thêm mới chuyên khoa
         await SpecialtyService.create({
           specialization_name: formData.name,
           description: formData.description,
         });
-        messageApi.success("Thêm mới chuyên khoa thành công!");
       }
 
       // Lấy lại danh sách chuyên khoa và trả về cho parent (Plan A)
@@ -50,7 +48,13 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
           description: item.description,
           createdAt: item.createdAt.split("T")[0],
         }));
-        onSave?.(mapped);
+        // notify parent and provide success message
+        onSave?.(
+          mapped,
+          specialty
+            ? "Cập nhật chuyên khoa thành công!"
+            : "Thêm mới chuyên khoa thành công!"
+        );
       } catch (errList) {
         console.error("Lỗi khi tải lại chuyên khoa:", errList);
         onSave?.();
@@ -58,7 +62,7 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
 
       onClose();
     } catch (error) {
-      messageApi.error("Lưu chuyên khoa thất bại. Vui lòng thử lại!");
+      message.error("Lưu chuyên khoa thất bại. Vui lòng thử lại!");
     } finally {
       setLoading(false);
     }
@@ -72,7 +76,6 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
           "color-mix(in oklab, var(--color-black) 50%, transparent)",
       }}
     >
-      {contextHolder}
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
         <h2 className="mb-4 text-xl font-bold">
           {specialty ? "Chỉnh sửa chuyên khoa" : "Thêm chuyên khoa mới"}
@@ -114,7 +117,7 @@ const SpecialtyFormModal = ({ specialty, onClose, onSave }) => {
                   if (plainText.length <= 500) {
                     setFormData({ ...formData, description: value });
                   } else {
-                    messageApi.warning("Mô tả không được vượt quá 500 ký tự!");
+                    message.warning("Mô tả không được vượt quá 500 ký tự!");
                   }
                 }}
                 placeholder="Mô tả về chuyên môn, kinh nghiệm làm việc..."
