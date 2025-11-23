@@ -33,11 +33,9 @@ export const router = createBrowserRouter([
   {
     path: ROUTE.HOME,
     element: (
-      <ProtectedRoute>
-        <RoleBasedRedirect>
-          <ClientLayout />
-        </RoleBasedRedirect>
-      </ProtectedRoute>
+      <RoleBasedRedirect>
+        <ClientLayout />
+      </RoleBasedRedirect>
     ),
     children: [
       { path: "", element: <HomePage /> },

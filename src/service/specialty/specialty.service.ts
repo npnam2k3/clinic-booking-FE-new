@@ -1,9 +1,10 @@
 import { SpecialtyDto } from "@/untils/dto/specialty.dto";
 import { authorizedRequest } from "../authorized-request";
+import axiosInstance from "../api/axios-instance.service";
 
 export const SpecialtyService = {
   async getAll(): Promise<SpecialtyDto[]> {
-    const res = await authorizedRequest("get", "/specialties");
+    const res = await axiosInstance.get("/specialties");
     return res.data.data;
   },
 
