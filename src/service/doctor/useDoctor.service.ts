@@ -1,5 +1,6 @@
 // doctor.service.ts
 import { authorizedRequest } from "../authorized-request";
+import axiosInstance from "../api/axios-instance.service";
 import { ApiResponse } from "@/untils/dto/api-respone.dto";
 import { DoctorDto, DoctorListResponse } from "@/untils/dto/doctor.dto";
 
@@ -12,7 +13,7 @@ export const DoctorService = {
   async getAll(
     params?: Record<string, any>
   ): Promise<import("@/untils/dto/doctor.dto").DoctorListResponse> {
-    const res = await authorizedRequest("get", BASE_URL, null, { params });
+    const res = await axiosInstance.get(BASE_URL, { params });
     // API trả về { data: { doctors: [...], totalRecords, totalPages, conditions } }
     return res.data?.data;
   },
@@ -21,7 +22,7 @@ export const DoctorService = {
   // LẤY CHI TIẾT BÁC SĨ
   // ========================
   async getById(doctorId: number): Promise<any> {
-    const res = await authorizedRequest("get", `${BASE_URL}/${doctorId}`);
+    const res = await axiosInstance.get(`${BASE_URL}/${doctorId}`);
     console.log("DoctorService.getById response:", res);
     return res.data?.data;
   },

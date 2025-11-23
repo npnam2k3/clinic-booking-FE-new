@@ -4,6 +4,7 @@ import {
   AppointmentDto,
   AppointmentResponseData,
 } from "@/untils/dto/appointment.dto";
+import axiosInstance from "../api/axios-instance.service";
 
 const BASE_URL = "/appointments";
 
@@ -32,7 +33,7 @@ export const AppointmentService = {
     patient_code: string;
     note?: string;
   }): Promise<ApiResponse<AppointmentDto>> {
-    const res = await authorizedRequest("post", BASE_URL, payload);
+    const res = await axiosInstance.post(BASE_URL, payload);
     return res.data;
   },
 
