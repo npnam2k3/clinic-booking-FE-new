@@ -42,10 +42,10 @@ const DoctorsPage = () => {
   // ===============================
   // FETCH DANH SÁCH BÁC SĨ & CHUYÊN KHOA
   // ===============================
-  const fetchDoctors = useCallback(async () => {
+  const fetchDoctors = useCallback(async (searchParams = {}) => {
     try {
       setLoading(true);
-      const data = await DoctorService.getAll();
+      const data = await DoctorService.getAll(searchParams);
       setDoctors(data?.doctors || []);
     } catch (err) {
       console.error("Lỗi khi tải danh sách bác sĩ:", err);
@@ -53,7 +53,7 @@ const DoctorsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [messageApi]);
 
   const fetchSpecialties = useCallback(async () => {
     try {
@@ -73,7 +73,20 @@ const DoctorsPage = () => {
   // TÌM KIẾM & LỌC
   // ===============================
   const handleSearch = () => {
-    setSearchTerm(searchInput.trim());
+    const keyword = searchInput.trim();
+    setSearchTerm(keyword);
+
+    // Build search params
+    const params = {};
+    if (keyword) params.keyword = keyword;
+    if (selectedSpecialty !== "all") {
+      // Find specialty ID by name
+      const specialty = specialties.find(s => s.specialization_name === selectedSpecialty);
+      if (specialty) params.specialtyId = specialty.specialization_id;
+    }
+
+    // Call API with params
+    fetchDoctors(params);
   };
 
   const handleReset = () => {
@@ -82,23 +95,6 @@ const DoctorsPage = () => {
     setSelectedSpecialty("all");
     fetchDoctors();
   };
-
-  const filteredDoctors = useMemo(() => {
-    if (!Array.isArray(doctors)) return [];
-
-    const kw = searchTerm.toLowerCase();
-
-    return doctors.filter((doctor) => {
-      const matchesSearch =
-        doctor.fullname.toLowerCase().includes(kw) ||
-        doctor.email.toLowerCase().includes(kw);
-      const matchesSpecialty =
-        selectedSpecialty === "all" ||
-        doctor.specialty?.specialization_name === selectedSpecialty;
-
-      return matchesSearch && matchesSpecialty;
-    });
-  }, [doctors, searchTerm, selectedSpecialty]);
 
   // ===============================
   // HÀNH ĐỘNG
@@ -240,7 +236,7 @@ const DoctorsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredDoctors.map((doctor) => (
+                  {doctors.map((doctor) => (
                     <tr
                       key={doctor.doctor_id}
                       className="border-b last:border-0"

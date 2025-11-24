@@ -207,9 +207,14 @@ const DoctorDetail = () => {
                     <div className="w-1 h-6 bg-blue-500 rounded"></div>
                     Giới thiệu
                   </h2>
-                  <p className="text-gray-700 leading-relaxed">
-                    {doctor.description || "Chưa có thông tin giới thiệu."}
-                  </p>
+                  <article
+                    className="prose prose-lg text-[16px]"
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        doctor.description ||
+                        "<p>Chưa có mô tả chuyên môn.</p>",
+                    }}
+                  />
                 </div>
 
                 {/* work schedule summary */}
@@ -368,11 +373,10 @@ const DoctorDetail = () => {
 
                   <div className="mt-6">
                     <Button
-                      className={`w-full h-12 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all ${
-                        selectedSlot
-                          ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white cursor-pointer"
-                          : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      }`}
+                      className={`w-full h-12 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all ${selectedSlot
+                        ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white cursor-pointer"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        }`}
                       disabled={!selectedSlot}
                       onClick={() => {
                         if (selectedSlot) {

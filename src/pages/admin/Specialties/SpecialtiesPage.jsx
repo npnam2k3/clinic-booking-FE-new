@@ -52,7 +52,7 @@ const SpecialtiesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [messageApi]);
 
   useEffect(() => {
     fetchSpecialties();
@@ -92,43 +92,7 @@ const SpecialtiesPage = () => {
   const handleAfterSave = (updatedData, successMessage) => {
     if (successMessage) {
       messageApi.success(successMessage);
-    }
-
-    if (updatedData) setSpecialties(updatedData);
-    else fetchSpecialties();
-  };
-
-  // 🔍 Khi ấn nút tìm kiếm
-  const handleSearch = () => {
-    const keyword = searchInput.trim();
-    setSearchTerm(keyword);
-    if (keyword) {
-      setSearchParams({ keyword }); // ✅ ghi vào URL
-    } else {
-      setSearchParams({}); // xoá param nếu rỗng
-    }
-  };
-
-  // 🔄 Làm mới danh sách (xoá keyword và reload)
-  const handleReset = () => {
-    setSearchInput("");
-    setSearchTerm("");
-    setSearchParams({});
-    fetchSpecialties();
-  };
-
-  // Lọc client-side
-  const filteredSpecialties = specialties.filter((specialty) =>
-    specialty.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  if (loading) {
-    return (
-      <div className="p-6 text-center text-gray-600">
-        {contextHolder}
-        Đang tải dữ liệu...
-      </div>
-    );
+    };
   }
 
   return (
@@ -154,45 +118,11 @@ const SpecialtiesPage = () => {
           </button>
         </div>
 
-        {/* Search */}
-        <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Nhập tên chuyên khoa..."
-                className="px-10"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSearch();
-                }}
-              />
-            </div>
-
-            <button
-              onClick={handleSearch}
-              className="rounded-md bg-orange-600 text-white px-4 py-2 hover:bg-orange-700 cursor-pointer"
-            >
-              Tìm kiếm
-            </button>
-
-            <button
-              onClick={handleReset}
-              className="rounded-md border border-gray-300 text-gray-700 px-3 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2"
-            >
-              <RefreshCcw className="h-4 w-4" />
-              Làm mới
-            </button>
-          </div>
-        </div>
-
         {/* Table */}
         <SpecialtiesTable
           handleDelete={handleDelete}
           handleEdit={handleEdit}
-          specialties={filteredSpecialties}
+          specialties={specialties}
         />
 
         {/* Add Modal */}

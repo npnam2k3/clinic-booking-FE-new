@@ -10,8 +10,8 @@ const BASE_URL = "/appointments";
 
 export const AppointmentService = {
   // Lấy danh sách lịch khám
-  async getAll(): Promise<AppointmentResponseData> {
-    const res = await authorizedRequest("get", BASE_URL);
+  async getAll(params?: Record<string, any>): Promise<AppointmentResponseData> {
+    const res = await authorizedRequest("get", BASE_URL, null, { params });
     // Một số backend trả về { status, data: [...] }
     return res.data?.data || res.data || [];
   },
