@@ -42,10 +42,10 @@ const AppointmentsPage = () => {
   // ===============================
   // FETCH DANH SÁCH CUỘC HẸN
   // ===============================
-  const fetchAppointments = useCallback(async () => {
+  const fetchAppointments = useCallback(async (searchParams = {}) => {
     try {
       setLoading(true);
-      const data = await AppointmentService.getAll();
+      const data = await AppointmentService.getAll(searchParams);
       console.log("Fetched appointments:", data);
       setAppointments(data.appointments || []);
     } catch (err) {
@@ -54,7 +54,7 @@ const AppointmentsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [messageApi]);
 
   useEffect(() => {
     fetchAppointments();
@@ -66,8 +66,20 @@ const AppointmentsPage = () => {
   const handleSearch = () => {
     const keyword = searchInput.trim();
     setSearchTerm(keyword);
-    if (keyword) setSearchParams({ keyword });
-    else setSearchParams({});
+
+    // Build search params
+    const params = {};
+    if (keyword) {
+      params.keyword = keyword;
+      setSearchParams({ keyword });
+    } else {
+      setSearchParams({});
+    }
+    if (statusFilter !== "all") params.status = statusFilter;
+    if (dateFilter) params.date = dateFilter;
+
+    // Call API with params
+    fetchAppointments(params);
   };
 
   const handleReset = () => {
@@ -78,33 +90,6 @@ const AppointmentsPage = () => {
     setDateFilter("");
     fetchAppointments();
   };
-
-  // ===============================
-  // LỌC CLIENT-SIDE
-  // ===============================
-  const filteredAppointments = useMemo(() => {
-    if (!Array.isArray(appointments)) return [];
-
-    const kw = searchTerm.toLowerCase();
-
-    return appointments.filter((apt) => {
-      const patientName = apt.patient?.fullname?.toLowerCase() || "";
-      const doctorName = apt.doctor_slot?.doctor?.fullname?.toLowerCase() || "";
-      const matchesSearch =
-        !kw ||
-        patientName.includes(kw) ||
-        doctorName.includes(kw) ||
-        String(apt.appointment_id).includes(kw);
-
-      const matchesStatus =
-        statusFilter === "all" || apt.status === statusFilter;
-
-      const matchesDate =
-        !dateFilter || apt.doctor_slot?.slot_date === dateFilter;
-
-      return matchesSearch && matchesStatus && matchesDate;
-    });
-  }, [appointments, searchTerm, statusFilter, dateFilter]);
 
   // ===============================
   // XEM CHI TIẾT
@@ -215,7 +200,7 @@ const AppointmentsPage = () => {
         {/* Bảng danh sách */}
         <Spin spinning={loading}>
           <AppointmentsTables
-            appointments={filteredAppointments}
+            appointments={appointments}
             handleViewDetails={handleViewDetails}
             handleCancel={handleCancel}
           />

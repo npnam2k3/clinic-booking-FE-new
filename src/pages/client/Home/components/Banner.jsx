@@ -37,7 +37,6 @@ const Banner = () => {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              onClick={() => navigate(ROUTE.BOOKING)}
               className="group bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl flex items-center gap-3 px-8 py-4 cursor-pointer hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-semibold text-lg w-full sm:w-auto justify-center"
             >
               <CalendarCheck size={24} className="group-hover:rotate-12 transition-transform duration-300" />

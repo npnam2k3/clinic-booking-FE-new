@@ -32,10 +32,10 @@ const PatientsPage = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
   // Hàm tải danh sách bệnh nhân
-  const fetchPatients = useCallback(async () => {
+  const fetchPatients = useCallback(async (searchParams = {}) => {
     try {
       setLoading(true);
-      const data = await PatientService.getAll();
+      const data = await PatientService.getAll(searchParams);
       setPatients(data.patients);
     } catch (error) {
       console.error("Lỗi khi tải danh sách bệnh nhân:", error);
@@ -43,33 +43,28 @@ const PatientsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [messageApi]);
 
   useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
 
-  // Lọc client-side theo từ khóa
-  const filteredPatients = patients.filter((patient) => {
-    const name = patient.fullname?.toLowerCase() || "";
-    const code = patient.patient_code?.toLowerCase() || "";
-    const phone = patient.contact?.phone_number || "";
-    return (
-      name.includes(searchTerm.toLowerCase()) ||
-      code.includes(searchTerm.toLowerCase()) ||
-      phone.includes(searchTerm)
-    );
-  });
-
   // Khi bấm nút tìm kiếm
   const handleSearch = () => {
     const keyword = searchInput.trim();
     setSearchTerm(keyword);
+
+    // Build search params
+    const params = {};
     if (keyword) {
+      params.keyword = keyword;
       setSearchParams({ keyword });
     } else {
       setSearchParams({});
     }
+
+    // Call API with params
+    fetchPatients(params);
   };
 
   // Làm mới danh sách và xóa keyword
@@ -183,7 +178,7 @@ const PatientsPage = () => {
           handleView={handleViewDetail}
           handleDelete={handleDelete}
           handleEdit={handleEdit}
-          patients={filteredPatients}
+          patients={patients}
         />
 
         {/* Add Modal */}

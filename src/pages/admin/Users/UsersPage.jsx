@@ -52,15 +52,15 @@ const UsersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [messageApi]);
 
   // ===============================
   // TẢI DANH SÁCH KHÁCH HÀNG
   // ===============================
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (searchParams = {}) => {
     try {
       setLoading(true);
-      const data = await UserService.getAll();
+      const data = await UserService.getAll(searchParams);
       setUserList(data.users);
     } catch (err) {
       console.error("Lỗi khi tải danh sách khách hàng:", err);
@@ -68,7 +68,7 @@ const UsersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [messageApi]);
 
   // ===============================
   // LOAD DỮ LIỆU KHI CHUYỂN TAB
@@ -77,65 +77,37 @@ const UsersPage = () => {
     if (activeTab === "staff") {
       fetchStaff();
     } else {
-      fetchUsers();
+      fetchUsers({ keyword: searchTerm });
     }
-  }, [activeTab, fetchStaff, fetchUsers]);
+  }, [activeTab, searchTerm, fetchStaff, fetchUsers]);
 
   // ===============================
-  // TÌM KIẾM
+  // SEARCH HANDLERS
   // ===============================
   const handleSearch = () => {
-    const keyword = searchInput.trim();
-    setSearchTerm(keyword);
-    if (keyword) setSearchParams({ keyword });
-    else setSearchParams({});
+    setSearchTerm(searchInput);
+    setSearchParams(searchInput ? { keyword: searchInput } : {});
   };
 
-  // ===============================
-  // LÀM MỚI DANH SÁCH
-  // ===============================
   const handleReset = () => {
     setSearchInput("");
     setSearchTerm("");
     setSearchParams({});
-    if (activeTab === "staff") fetchStaff();
-    else fetchUsers();
   };
 
   // ===============================
-  // LỌC DỮ LIỆU CLIENT-SIDE
-  // ===============================
-  const filteredStaff = staffList.filter((s) => {
-    const kw = searchTerm.toLowerCase();
-    return (
-      s.email.toLowerCase().includes(kw) ||
-      s.contact.fullname.toLowerCase().includes(kw) ||
-      s.contact.phone_number.includes(kw)
-    );
-  });
-
-  const filteredUsers = userList.filter((u) => {
-    const kw = searchTerm.toLowerCase();
-    return (
-      u.email.toLowerCase().includes(kw) ||
-      u.contact.fullname.toLowerCase().includes(kw) ||
-      u.contact.phone_number.includes(kw)
-    );
-  });
-
-  // ===============================
-  // LƯU / THÊM / XÓA
+  // EVENT HANDLERS
   // ===============================
   const handleSaveEdit = async (updatedData) => {
     // If modal provided updated data, use it to update state (avoid re-fetch that may clear messages)
     const { data: list, message: successMessage } =
       updatedData &&
-      typeof updatedData === "object" &&
-      !(updatedData instanceof Array)
+        typeof updatedData === "object" &&
+        !(updatedData instanceof Array)
         ? {
-            data: updatedData.data || updatedData,
-            message: updatedData.message,
-          }
+          data: updatedData.data || updatedData,
+          message: updatedData.message,
+        }
         : { data: updatedData, message: undefined };
 
     if (list) {
@@ -155,12 +127,12 @@ const UsersPage = () => {
   const handleAddStaff = async (updatedData) => {
     const { data: list, message: successMessage } =
       updatedData &&
-      typeof updatedData === "object" &&
-      !(updatedData instanceof Array)
+        typeof updatedData === "object" &&
+        !(updatedData instanceof Array)
         ? {
-            data: updatedData.data || updatedData,
-            message: updatedData.message,
-          }
+          data: updatedData.data || updatedData,
+          message: updatedData.message,
+        }
         : { data: updatedData, message: undefined };
 
     if (list) setStaffList(list);
@@ -197,8 +169,7 @@ const UsersPage = () => {
     } catch (err) {
       console.error("Lỗi khi xóa:", err);
       messageApi.error(
-        `Xóa ${
-          deleteTarget.type === "staff" ? "nhân viên" : "khách hàng"
+        `Xóa ${deleteTarget.type === "staff" ? "nhân viên" : "khách hàng"
         } thất bại. Vui lòng thử lại!`
       );
     } finally {
@@ -242,35 +213,14 @@ const UsersPage = () => {
 
           {/* ======================= TAB NHÂN VIÊN ======================= */}
           <TabsContent value="staff">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3 w-1/2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    placeholder="Tìm kiếm nhân viên..."
-                    className="pl-10"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  />
-                </div>
-                <Button onClick={handleSearch}>Tìm kiếm</Button>
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  onClick={handleReset}
-                >
-                  <RefreshCcw className="h-4 w-4" /> Làm mới
-                </Button>
-              </div>
-
+            <div className="flex items-center justify-end mb-4">
               <Button onClick={() => setIsAddStaffOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" /> Thêm nhân viên
               </Button>
             </div>
 
             <UserTable
-              data={filteredStaff}
+              data={staffList}
               onEdit={(user) => {
                 setSelectedUser(user);
                 setIsEditOpen(true);
@@ -307,7 +257,7 @@ const UsersPage = () => {
             </div>
 
             <UserTable
-              data={filteredUsers}
+              data={userList}
               onEdit={(user) => {
                 setSelectedUser(user);
                 setIsEditOpen(true);

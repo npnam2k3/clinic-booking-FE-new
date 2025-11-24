@@ -1,19 +1,21 @@
 import { memoryStorage } from "@/untils/storage";
 import storage from "@/untils/storage";
-import { AxiosRequestConfig } from "axios"; // ✅ thêm import này
 import axiosInstance from "./api/axios-instance.service";
+import { AxiosRequestConfig } from "axios";
 
 export const authorizedRequest = async (
   method: string,
   url: string,
   data: any = null,
-  config: AxiosRequestConfig = {} // ✅ dùng kiểu AxiosRequestConfig thay vì {}
+  config: AxiosRequestConfig = {}
 ) => {
   const token = memoryStorage.getAccessToken() || storage.getToken();
   if (!token) throw new Error("Không tìm thấy token — vui lòng đăng nhập lại");
 
+  const isFormData = data instanceof FormData;
   const headers = {
     Authorization: `Bearer ${token}`,
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(config.headers || {}),
   };
 
