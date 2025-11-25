@@ -154,4 +154,33 @@ export const userAuthService = {
       }
     }
   },
+
+  forgotPassword: async (email: string): Promise<ApiResponse> => {
+    try {
+      const response = await axiosInstance.post<ApiResponse>(
+        "/auth/forgot-password",
+        { email }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { message: "Không thể gửi yêu cầu quên mật khẩu" };
+    }
+  },
+
+  resetPassword: async (
+    token: string,
+    payload: { new_password: string; confirm_password: string }
+  ): Promise<ApiResponse> => {
+    try {
+      const response = await axiosInstance.put<ApiResponse>(
+        `/auth/reset-password/${token}`,
+        payload
+      );
+
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { message: "Không thể đặt lại mật khẩu" };
+    }
+  },
 };
