@@ -21,11 +21,11 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
   const handleChange = (e) => {
-      const { id, value } = e.target;
-      setFormData({ ...formData, [id]: value });
-    };
+    const { id, value } = e.target;
+    setFormData({ ...formData, [id]: value });
+  };
 
-    const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validate đầu vào
@@ -39,9 +39,29 @@ const RegisterPage = () => {
       setError("");
       const response = await userAuthService.register(formData);
       messageApi.success("Đăng ký thành công! Hãy đăng nhập.");
-      navigate("/login");
+
+      // Delay để message hiển thị trước khi chuyển trang
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
     } catch (err) {
-      messageApi.error(err?.message || "Đăng ký thất bại, vui lòng thử lại.");
+      console.error("Register error:", err);
+
+      // Xử lý lỗi có detail array (validation errors)
+      if (err?.detail && Array.isArray(err.detail) && err.detail.length > 0) {
+        // Hiển thị tất cả các lỗi validation
+        err.detail.forEach((error) => {
+          messageApi.error(error.message || "Có lỗi xảy ra");
+        });
+      }
+      // Xử lý lỗi có message đơn giản (conflict, not found, etc.)
+      else if (err?.message) {
+        messageApi.error(err.message);
+      }
+      // Fallback message
+      else {
+        messageApi.error("Đăng ký thất bại, vui lòng thử lại.");
+      }
     }
   };
 
