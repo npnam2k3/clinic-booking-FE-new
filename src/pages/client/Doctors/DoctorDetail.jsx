@@ -94,27 +94,27 @@ const DoctorDetail = () => {
     );
 
     // Nếu API chưa có slot, fallback tạo thủ công theo slot_duration
-    if (availableSlots.length === 0 && matchedSchedules.length > 0) {
-      const generatedSlots = [];
-      matchedSchedules.forEach((schedule) => {
-        const start = dayjs(schedule.start_time, "HH:mm:ss");
-        const end = dayjs(schedule.end_time, "HH:mm:ss");
-        const duration = schedule.slot_duration || 30;
-        let current = start;
-        while (current.isBefore(end)) {
-          const next = current.add(duration, "minute");
-          generatedSlots.push({
-            schedule_id: schedule.schedule_id,
-            start_at: current.format("HH:mm"),
-            end_at: next.format("HH:mm"),
-            slot_date: selectedDateStr,
-            status: "available",
-          });
-          current = next;
-        }
-      });
-      return generatedSlots;
-    }
+    // if (availableSlots.length === 0 && matchedSchedules.length > 0) {
+    //   const generatedSlots = [];
+    //   matchedSchedules.forEach((schedule) => {
+    //     const start = dayjs(schedule.start_time, "HH:mm:ss");
+    //     const end = dayjs(schedule.end_time, "HH:mm:ss");
+    //     const duration = schedule.slot_duration || 30;
+    //     let current = start;
+    //     while (current.isBefore(end)) {
+    //       const next = current.add(duration, "minute");
+    //       generatedSlots.push({
+    //         schedule_id: schedule.schedule_id,
+    //         start_at: current.format("HH:mm"),
+    //         end_at: next.format("HH:mm"),
+    //         slot_date: selectedDateStr,
+    //         status: "available",
+    //       });
+    //       current = next;
+    //     }
+    //   });
+    //   return generatedSlots;
+    // }
 
     return availableSlots.map((s) => ({
       schedule_id: s.source_id,
@@ -373,10 +373,11 @@ const DoctorDetail = () => {
 
                   <div className="mt-6">
                     <Button
-                      className={`w-full h-12 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all ${selectedSlot
-                        ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white cursor-pointer"
-                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        }`}
+                      className={`w-full h-12 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all ${
+                        selectedSlot
+                          ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white cursor-pointer"
+                          : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      }`}
                       disabled={!selectedSlot}
                       onClick={() => {
                         if (selectedSlot) {

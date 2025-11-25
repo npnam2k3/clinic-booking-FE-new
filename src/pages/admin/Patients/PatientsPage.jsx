@@ -32,18 +32,21 @@ const PatientsPage = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
   // Hàm tải danh sách bệnh nhân
-  const fetchPatients = useCallback(async (searchParams = {}) => {
-    try {
-      setLoading(true);
-      const data = await PatientService.getAll(searchParams);
-      setPatients(data.patients);
-    } catch (error) {
-      console.error("Lỗi khi tải danh sách bệnh nhân:", error);
-      messageApi.error("Tải danh sách bệnh nhân thất bại!");
-    } finally {
-      setLoading(false);
-    }
-  }, [messageApi]);
+  const fetchPatients = useCallback(
+    async (searchParams = {}) => {
+      try {
+        setLoading(true);
+        const data = await PatientService.getAll(searchParams);
+        setPatients(data.patients);
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách bệnh nhân:", error);
+        messageApi.error("Tải danh sách bệnh nhân thất bại!");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [messageApi]
+  );
 
   useEffect(() => {
     fetchPatients();
@@ -148,7 +151,7 @@ const PatientsPage = () => {
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Tìm kiếm theo tên, mã bệnh nhân hoặc số điện thoại..."
+                placeholder="Tìm kiếm theo tên bệnh nhân"
                 className="px-10"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}

@@ -42,18 +42,21 @@ const DoctorsPage = () => {
   // ===============================
   // FETCH DANH SÁCH BÁC SĨ & CHUYÊN KHOA
   // ===============================
-  const fetchDoctors = useCallback(async (searchParams = {}) => {
-    try {
-      setLoading(true);
-      const data = await DoctorService.getAll(searchParams);
-      setDoctors(data?.doctors || []);
-    } catch (err) {
-      console.error("Lỗi khi tải danh sách bác sĩ:", err);
-      messageApi.error("Tải danh sách bác sĩ thất bại!");
-    } finally {
-      setLoading(false);
-    }
-  }, [messageApi]);
+  const fetchDoctors = useCallback(
+    async (searchParams = {}) => {
+      try {
+        setLoading(true);
+        const data = await DoctorService.getAll(searchParams);
+        setDoctors(data?.doctors || []);
+      } catch (err) {
+        console.error("Lỗi khi tải danh sách bác sĩ:", err);
+        messageApi.error("Tải danh sách bác sĩ thất bại!");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [messageApi]
+  );
 
   const fetchSpecialties = useCallback(async () => {
     try {
@@ -81,7 +84,9 @@ const DoctorsPage = () => {
     if (keyword) params.keyword = keyword;
     if (selectedSpecialty !== "all") {
       // Find specialty ID by name
-      const specialty = specialties.find(s => s.specialization_name === selectedSpecialty);
+      const specialty = specialties.find(
+        (s) => s.specialization_name === selectedSpecialty
+      );
       if (specialty) params.specialtyId = specialty.specialization_id;
     }
 
@@ -177,7 +182,7 @@ const DoctorsPage = () => {
                 />
                 <Input
                   type="text"
-                  placeholder="Tìm kiếm bác sĩ theo tên hoặc email..."
+                  placeholder="Tìm kiếm bác sĩ theo tên"
                   className="pl-10"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}

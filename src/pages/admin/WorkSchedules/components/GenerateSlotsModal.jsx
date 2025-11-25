@@ -244,9 +244,9 @@ const GenerateSlotsModal = ({ onClose, activeTab, onSuccess, onError }) => {
               <Input
                 type="date"
                 value={formData.dateFrom}
-                onChange={(e) =>
-                  setFormData({ ...formData, dateFrom: e.target.value })
-                }
+                // onChange={(e) =>
+                //   setFormData({ ...formData, dateFrom: e.target.value })
+                // }
                 className="h-[42px]"
               />
             </div>
@@ -259,9 +259,9 @@ const GenerateSlotsModal = ({ onClose, activeTab, onSuccess, onError }) => {
               <Input
                 type="date"
                 value={formData.dateTo}
-                onChange={(e) =>
-                  setFormData({ ...formData, dateTo: e.target.value })
-                }
+                // onChange={(e) =>
+                //   setFormData({ ...formData, dateTo: e.target.value })
+                // }
                 className="h-[42px]"
               />
             </div>
